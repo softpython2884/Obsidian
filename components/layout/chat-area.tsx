@@ -29,7 +29,136 @@ export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // ... (keep existing useEffects and handlers)
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setShowNewMessages(false);
+  };
+
+  const handleScroll = () => {
+    if (scrollAreaRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+      const isBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setIsNearBottom(isBottom);
+      if (isBottom) setShowNewMessages(false);
+    }
+  };
+
+  useEffect(() => {
+    if (channel) {
+      // Fetch messages
+      fetch(`/api/messages?channelId=${channel.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          const decryptedMessages = data.map((msg: any) => ({
+            ...msg,
+            content: decrypt(msg.content)
+          }));
+          setMessages(decryptedMessages);
+          setTimeout(scrollToBottom, 100);
+        });
+
+      // Join room
+      if (socket) {
+        socket.emit('join-room', channel.id);
+      }
+    }
+  }, [channel, socket]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('new-message', (message: any) => {
+        const decryptedMsg = {
+          ...message,
+          content: decrypt(message.content)
+        };
+        setMessages((prev) => [...prev, decryptedMsg]);
+        
+        if (isNearBottom) {
+          setTimeout(scrollToBottom, 100);
+        } else {
+          setShowNewMessages(true);
+        }
+      });
+
+      socket.on('user-typing', (data: any) => {
+        if (data.isTyping) {
+          setTypingUsers((prev) => Array.from(new Set([...prev, data.pseudo])));
+        } else {
+          setTypingUsers((prev) => prev.filter((u) => u !== data.pseudo));
+        }
+      });
+
+      return () => {
+        socket.off('new-message');
+        socket.off('user-typing');
+      };
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    // Scroll to bottom on initial load
+    if (messages.length > 0 && isNearBottom) {
+      setTimeout(() => scrollToBottom(), 0);
+    }
+  }, [messages, isNearBottom]);
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || !user || !channel) return;
+
+    const content = inputValue;
+    setInputValue('');
+    scrollToBottom();
+
+    // Handle commands
+    if (content.startsWith('/')) {
+      if (content === '/clear') {
+        setMessages([]);
+        return;
+      }
+      if (content === '/help') {
+        const helpMsg = {
+          id: 'help-' + Date.now(),
+          content: 'Available commands: /help, /nick [name], /clear',
+          user: { pseudo: 'System', role: 'ADMIN' },
+          createdAt: new Date(),
+          isSystem: true
+        };
+        setMessages((prev) => [...prev, helpMsg]);
+        return;
+      }
+    }
+
+    const response = await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content,
+        userId: user.id,
+        channelId: channel.id,
+      }),
+    });
+
+    const newMessage = await response.json();
+    
+    if (socket) {
+      socket.emit('send-message', {
+        channelId: channel.id,
+        message: newMessage
+      });
+    }
+  };
+
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+    if (!isTyping && socket && user) {
+      setIsTyping(true);
+      socket.emit('typing', { channelId: channel.id, pseudo: user.pseudo, isTyping: true });
+      setTimeout(() => {
+        setIsTyping(false);
+        socket.emit('typing', { channelId: channel.id, pseudo: user.pseudo, isTyping: false });
+      }, 3000);
+    }
+  };
 
   const handleEditMessage = (msg: any) => {
     setEditingMessageId(msg.id);

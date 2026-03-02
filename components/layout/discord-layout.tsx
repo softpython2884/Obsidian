@@ -24,6 +24,11 @@ export const DiscordLayout = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   useEffect(() => {
+    // Temporary fix for existing messages showing as edited
+    fetch('/api/admin/fix-db').catch(console.error);
+  }, []);
+
+  useEffect(() => {
     if (user) {
       fetch(`/api/servers?userId=${user.id}`)
         .then((res) => res.json())

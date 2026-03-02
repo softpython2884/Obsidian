@@ -48,7 +48,7 @@ export const DMView = ({ onStartDM }: DMViewProps) => {
         
         <div className="mt-8 flex flex-col items-center justify-center text-center">
           <div className="mb-4 h-40 w-60 bg-contain bg-center bg-no-repeat opacity-50" style={{ backgroundImage: "url('https://discord.com/assets/a188414ce83f2454b9d71a47c3d95909.svg')" }} />
-          <p className="text-[#949BA4]">Wumpus is waiting on friends. You don't have to though!</p>
+          <p className="text-[#949BA4]">Wumpus is waiting on friends. You don&apos;t have to though!</p>
         </div>
       </div>
     </div>

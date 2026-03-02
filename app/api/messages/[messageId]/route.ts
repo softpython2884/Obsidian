@@ -41,7 +41,6 @@ export async function PATCH(
       where: { id: messageId },
       data: {
         content: encryptedContent,
-        updatedAt: new Date(),
       },
       include: {
         user: true,
