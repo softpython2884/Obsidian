@@ -1,39 +1,56 @@
 'use client';
 
 import React from 'react';
-import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield } from 'lucide-react';
+import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
+import { toast } from 'sonner';
 
 interface ChannelSidebarProps {
   server: any;
   activeChannel: any;
   onSelectChannel: (channel: any) => void;
+  onOpenSettings: () => void;
 }
 
-export const ChannelSidebar = ({ server, activeChannel, onSelectChannel }: ChannelSidebarProps) => {
+export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenSettings }: ChannelSidebarProps) => {
   const { user } = useAuth();
 
   if (!server) {
     return (
-      <div className="flex w-60 flex-col bg-[#2B2D31]">
-        <div className="flex h-12 items-center border-b border-[#1E1F22] px-4 shadow-sm">
-          <div className="h-4 w-32 animate-pulse rounded bg-[#3F4147]" />
+      <div className="flex w-60 flex-col bg-black/60 backdrop-blur-sm">
+        <div className="flex h-12 items-center border-b border-white/10 px-4 shadow-sm">
+          <div className="h-4 w-32 animate-pulse rounded bg-white/10" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex w-60 flex-col bg-[#2B2D31]">
+    <div className="flex w-60 flex-col bg-black/60 backdrop-blur-sm">
       {/* Server Header */}
-      <div className="flex h-12 cursor-pointer items-center justify-between border-b border-[#1E1F22] px-4 shadow-sm transition-colors hover:bg-[#35373C]">
+      <div className="flex h-12 cursor-pointer items-center justify-between border-b border-white/10 px-4 shadow-sm transition-colors hover:bg-white/5">
         <h1 className="truncate font-bold text-white">{server.name}</h1>
-        <ChevronDown size={20} className="text-[#B5BAC1]" />
+        <div className="flex items-center space-x-2">
+          {server.inviteCode && (server.ownerId === user?.id || server.isInviteCodeVisible) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(server.inviteCode);
+                toast.success(`Invite code copied: ${server.inviteCode}`);
+              }}
+              className="text-[#B5BAC1] hover:text-white"
+              title="Copy Invite Code"
+            >
+              <UserPlus size={16} />
+            </button>
+          )}
+          <ChevronDown size={20} className="text-[#B5BAC1]" />
+        </div>
       </div>
 
       {/* Channel List */}
-      <div className="flex-1 overflow-y-auto px-2 py-4">
+      <div className="flex-1 overflow-y-auto px-2 py-4 no-scrollbar">
         {server.categories?.map((category: any) => (
           <div key={category.id} className="mb-4">
             <div className="mb-1 flex items-center px-1 text-xs font-bold uppercase text-[#949BA4]">
@@ -48,8 +65,8 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel }: Chann
                   className={cn(
                     "group flex cursor-pointer items-center rounded px-2 py-1 transition-colors",
                     activeChannel?.id === channel.id 
-                      ? "bg-[#3F4147] text-white" 
-                      : "text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]"
+                      ? "bg-white/20 text-white" 
+                      : "text-[#949BA4] hover:bg-white/10 hover:text-[#DBDEE1]"
                   )}
                 >
                   <Hash size={20} className="mr-1.5 text-[#80848E]" />
@@ -65,17 +82,25 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel }: Chann
       </div>
 
       {/* User Footer */}
-      <div className="flex h-[52px] items-center bg-[#232428] px-2">
-        <div className="flex flex-1 cursor-pointer items-center rounded px-1 py-1 hover:bg-[#3F4147]">
+      <div className="flex h-[52px] items-center bg-black/40 px-2 border-t border-white/5">
+        <div 
+          className="flex flex-1 cursor-pointer items-center rounded px-1 py-1 hover:bg-white/10"
+          onClick={onOpenSettings}
+        >
           <div className="relative h-8 w-8 overflow-hidden rounded-full bg-[#5865F2]">
             {user?.avatarUrl ? (
               <img src={user.avatarUrl} alt={user.pseudo} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white">
-                {user?.pseudo.charAt(0).toUpperCase()}
+                {user?.pseudo?.charAt(0).toUpperCase()}
               </div>
             )}
-            <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#232428] bg-[#23A559]" />
+            <div className={cn(
+              "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#232428]",
+              user?.state === 'ONLINE' ? "bg-[#23A559]" : 
+              user?.state === 'IDLE' ? "bg-[#F0B232]" : 
+              user?.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
+            )} />
           </div>
           <div className="ml-2 flex flex-col overflow-hidden">
             <span className="truncate text-sm font-bold text-white leading-tight">{user?.pseudo}</span>
@@ -92,15 +117,6 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel }: Chann
               <Shield size={20} />
             </div>
           )}
-          <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded text-[#B5BAC1] hover:bg-[#3F4147] hover:text-[#DBDEE1]">
-            <Mic size={20} />
-          </div>
-          <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded text-[#B5BAC1] hover:bg-[#3F4147] hover:text-[#DBDEE1]">
-            <Headphones size={20} />
-          </div>
-          <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded text-[#B5BAC1] hover:bg-[#3F4147] hover:text-[#DBDEE1]">
-            <Settings2 size={20} />
-          </div>
         </div>
       </div>
     </div>

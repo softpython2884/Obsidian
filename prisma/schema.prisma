@@ -17,6 +17,8 @@ model User {
   bannerUrl     String?
   bio           String?
   status        String?   // Custom status message
+  accentColor   String?   // Hex color code
+  socialLinks   String?   // JSON string of social links
   state         String    @default("ONLINE") // ONLINE, IDLE, DND, INVISIBLE
   role          String    @default("MEMBER") // ADMIN, MODERATOR, MEMBER
   isHost        Boolean   @default(false)
@@ -28,14 +30,18 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   messages      Message[]
+  reactions     Reaction[]
   servers       ServerMember[]
   ownedServers  Server[]
+  channels      Channel[] @relation("ChannelMembers")
 }
 
 model Server {
   id          String    @id @default(uuid())
   name        String
   imageUrl    String?
+  inviteCode  String    @unique @default(cuid())
+  isInviteCodeVisible Boolean @default(true)
   ownerId     String
   owner       User      @relation(fields: [ownerId], references: [id])
   createdAt   DateTime  @default(now())
@@ -67,10 +73,11 @@ model Category {
 model Channel {
   id          String    @id @default(uuid())
   name        String
-  type        String    @default("TEXT") // TEXT, VOICE
-  categoryId  String
-  category    Category  @relation(fields: [categoryId], references: [id])
+  type        String    @default("TEXT") // TEXT, VOICE, DM
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
   messages    Message[]
+  members     User[]    @relation("ChannelMembers")
 }
 
 model Message {
@@ -84,6 +91,19 @@ model Message {
   channelId   String
   channel     Channel   @relation(fields: [channelId], references: [id])
   createdAt   DateTime  @default(now())
+  reactions   Reaction[]
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  emoji     String
+  messageId String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   Message  @relation(fields: [messageId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId, emoji])
 }
 
 model Log {

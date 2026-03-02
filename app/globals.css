@@ -1,1 +1,75 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    /* ACCENT COLORS */
+    --main-color: #2780e6;
+    --hover-color: #1e63b3;
+    --success-color: #43b581;
+    --danger-color: #982929;
+
+    /* STATUS COLORS */
+    --online-color: #43b581;
+    --idle-color: #faa61a;
+    --dnd-color: #982929;
+    --streaming-color: #593695;
+    --offline-color: #808080;
+
+    /* APP BACKGROUND */
+    --background-shading-percent: 100%;
+    --background-image: url(https://clearvision.github.io/images/sapphire.jpg);
+    --background-position: center;
+    --background-size: cover;
+    --background-attachment: fixed;
+    --background-filter: saturate(calc(var(--saturation-factor, 1) * 1));
+
+    /* SHADING COLORS (Dark Theme Default) */
+    --background-shading: rgba(0, 0, 0, 0.6);
+    --card-shading: rgba(0, 0, 0, 0.3);
+    --popout-shading: rgba(0, 0, 0, 0.7);
+    --modal-shading: rgba(0, 0, 0, 0.5);
+    --input-shading: rgba(255, 255, 255, 0.05);
+    --normal-text: #fbfbfb;
+    --muted-text: #94949c;
+    
+    /* CHANNEL COLORS */
+    --channel-normal: #8e9297;
+    --channel-muted: #4f545c;
+    --channel-hover: #dcddde;
+    --channel-selected: #ffffff;
+    --channel-selected-bg: var(--main-color);
+    --channel-unread: var(--main-color);
+  }
+
+  body {
+    background-image: var(--background-image);
+    background-position: var(--background-position);
+    background-size: var(--background-size);
+    background-attachment: var(--background-attachment);
+    color: var(--normal-text);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .bg-glass {
+    background-color: var(--background-shading);
+    backdrop-filter: blur(5px);
+  }
+  
+  .bg-card-glass {
+    background-color: var(--card-shading);
+  }
+  
+  .bg-popout-glass {
+    background-color: var(--popout-shading);
+    backdrop-filter: blur(10px);
+  }
+}

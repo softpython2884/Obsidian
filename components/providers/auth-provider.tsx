@@ -6,6 +6,11 @@ interface User {
   id: string;
   pseudo: string;
   avatarUrl?: string;
+  bannerUrl?: string;
+  accentColor?: string;
+  bio?: string;
+  status?: string;
+  socialLinks?: string;
   role: string;
   isHost: boolean;
 }
@@ -15,6 +20,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (pseudo: string, avatarUrl?: string) => Promise<void>;
   logout: () => void;
+  updateUser: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,6 +28,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   login: async () => {},
   logout: () => {},
+  updateUser: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -71,8 +78,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem('discord_clone_user');
   };
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('discord_clone_user', JSON.stringify(updatedUser));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

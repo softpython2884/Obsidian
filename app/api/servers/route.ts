@@ -1,14 +1,26 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Custom nanoid with specific alphabet for invite codes
+const generateInviteCode = () => {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 7; i++) {
+    code += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+  }
+  return code;
+};
+
 export async function POST(req: Request) {
   try {
     const { name, imageUrl, ownerId } = await req.json();
+    const inviteCode = generateInviteCode();
 
     const server = await prisma.server.create({
       data: {
         name,
         imageUrl,
+        inviteCode,
         ownerId,
         members: {
           create: {
@@ -17,15 +29,25 @@ export async function POST(req: Request) {
           }
         },
         categories: {
-          create: {
-            name: 'General',
-            channels: {
-              create: {
-                name: 'general',
-                type: 'TEXT',
+          create: [
+            {
+              name: 'General',
+              channels: {
+                create: [
+                  { name: 'general', type: 'TEXT' },
+                  { name: 'media', type: 'TEXT' }
+                ]
+              }
+            },
+            {
+              name: 'Staff Only',
+              channels: {
+                create: [
+                  { name: 'staff-chat', type: 'TEXT' }
+                ]
               }
             }
-          }
+          ]
         }
       },
       include: {
