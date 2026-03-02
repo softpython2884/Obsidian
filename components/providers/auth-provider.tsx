@@ -48,6 +48,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pseudo, avatarUrl }),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`Login failed: ${errorData.error || 'Unknown error'}`);
+        return;
+      }
+
       const data = await response.json();
       if (data.id) {
         setUser(data);
@@ -55,6 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (error) {
       console.error('Login failed:', error);
+      alert('Login failed: Network error or server is down.');
     }
   };
 
