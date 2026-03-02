@@ -58,6 +58,7 @@ model ServerMember {
   role      String   @default("MEMBER")
   user      User     @relation(fields: [userId], references: [id])
   server    Server   @relation(fields: [serverId], references: [id])
+  joinedAt  DateTime @default(now())
 
   @@unique([userId, serverId])
 }

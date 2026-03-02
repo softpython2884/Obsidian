@@ -1,98 +1,102 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/components/providers/auth-provider';
-import { Shield, UserX, UserCheck, Edit3, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
-export default function AdminDashboard() {
-  const { user } = useAuth();
-  const [users, setUsers] = useState<any[]>([]);
-  const [logs, setLogs] = useState<any[]>([]);
+export default function AdminPage() {
+  const [code, setCode] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (user?.role === 'ADMIN') {
-      fetch('/api/users')
-        .then(res => res.json())
-        .then(data => setUsers(data));
-      
-      // Fetch logs if implemented
+  const handleLogin = () => {
+    if (code === '3044') {
+      setIsAuthenticated(true);
+      toast.success('Access granted');
+    } else {
+      toast.error('Invalid access code');
     }
-  }, [user]);
+  };
 
-  if (user?.role !== 'ADMIN') {
+  const handleResetDB = async () => {
+    if (!confirm('WARNING: This will delete ALL data (users, servers, messages). Are you sure?')) return;
+    
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/reset-db?code=${code}`, {
+        method: 'DELETE',
+      });
+      
+      if (res.ok) {
+        toast.success('Database reset successfully');
+        setTimeout(() => window.location.href = '/', 2000);
+      } else {
+        toast.error('Failed to reset database');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isAuthenticated) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#313338] text-white">
-        <h1 className="text-2xl font-bold">Access Denied</h1>
+      <div className="flex h-screen items-center justify-center bg-[#1E1F22]">
+        <div className="w-full max-w-md rounded-lg bg-[#313338] p-8 shadow-2xl">
+          <h1 className="mb-6 text-center text-2xl font-bold text-white">Admin Access</h1>
+          <div className="space-y-4">
+            <Input
+              type="password"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Enter access code"
+              className="border-none bg-[#1E1F22] text-white focus-visible:ring-1 focus-visible:ring-[#5865F2]"
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            />
+            <Button
+              onClick={handleLogin}
+              className="w-full bg-[#5865F2] hover:bg-[#4752C4]"
+            >
+              Enter
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const handleBan = async (userId: string) => {
-    // Implement ban logic
-    alert(`Banning user ${userId}`);
-  };
-
-  const handleRename = async (userId: string) => {
-    const newName = prompt('New pseudo:');
-    if (newName) {
-      // Implement rename logic
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-[#313338] p-8 text-[#DBDEE1]">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="flex items-center text-3xl font-bold text-white">
-            <Shield className="mr-3 text-[#F04747]" size={32} />
-            Admin Dashboard
-          </h1>
-          <Button variant="outline" onClick={() => window.location.href = '/'}>Back to App</Button>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* User Management */}
-          <div className="rounded-lg bg-[#2B2D31] p-6 shadow-xl">
-            <h2 className="mb-4 text-xl font-bold text-white">User Management</h2>
-            <div className="space-y-4">
-              {users.map(u => (
-                <div key={u.id} className="flex items-center justify-between rounded bg-[#1E1F22] p-3">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-[#5865F2] flex items-center justify-center font-bold">
-                      {u.pseudo.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="ml-3">
-                      <p className="font-bold text-white">{u.pseudo}</p>
-                      <p className="text-xs text-[#949BA4]">{u.id}</p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleRename(u.id)}>
-                      <Edit3 size={16} />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-[#F04747]" onClick={() => handleBan(u.id)}>
-                      <UserX size={16} />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+    <div className="flex h-screen flex-col items-center justify-center bg-[#1E1F22] text-white">
+      <div className="w-full max-w-2xl rounded-lg bg-[#313338] p-8 shadow-2xl">
+        <h1 className="mb-8 text-center text-3xl font-bold text-[#F23F43]">DANGER ZONE</h1>
+        
+        <div className="space-y-6">
+          <div className="rounded-lg border border-[#F23F43] bg-[#F23F43]/10 p-6">
+            <h2 className="mb-2 text-xl font-bold text-[#F23F43]">Reset Database</h2>
+            <p className="mb-4 text-[#B5BAC1]">
+              This will permanently delete all users, servers, channels, and messages. 
+              This action cannot be undone.
+            </p>
+            <Button 
+              onClick={handleResetDB} 
+              disabled={isLoading}
+              className="bg-[#F23F43] hover:bg-[#D83C3E] text-white font-bold"
+            >
+              {isLoading ? 'Resetting...' : 'NUKE DATABASE'}
+            </Button>
           </div>
 
-          {/* Moderation Logs */}
-          <div className="rounded-lg bg-[#2B2D31] p-6 shadow-xl">
-            <h2 className="mb-4 text-xl font-bold text-white">Moderation Logs</h2>
-            <div className="space-y-2 text-sm">
-              <div className="rounded border-l-4 border-[#F04747] bg-[#1E1F22] p-2">
-                <span className="font-bold text-[#F04747]">[BAN]</span> Admin banned user CyberPunk_01
-                <p className="text-[10px] text-[#949BA4]">2 minutes ago</p>
-              </div>
-              <div className="rounded border-l-4 border-[#FAA61A] bg-[#1E1F22] p-2">
-                <span className="font-bold text-[#FAA61A]">[RENAME]</span> Admin renamed user User123 to Ghost
-                <p className="text-[10px] text-[#949BA4]">15 minutes ago</p>
-              </div>
-            </div>
+          <div className="flex justify-center pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/'}
+              className="border-[#4E5058] text-[#DBDEE1] hover:bg-[#4E5058]"
+            >
+              Return to App
+            </Button>
           </div>
         </div>
       </div>

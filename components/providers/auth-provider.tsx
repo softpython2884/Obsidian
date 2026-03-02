@@ -13,6 +13,7 @@ interface User {
   socialLinks?: string;
   role: string;
   isHost: boolean;
+  state?: string;
 }
 
 interface AuthContextType {
