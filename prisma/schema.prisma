@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  pseudo        String
+  avatarUrl     String?
+  bannerUrl     String?
+  bio           String?
+  status        String?   // Custom status message
+  state         String    @default("ONLINE") // ONLINE, IDLE, DND, INVISIBLE
+  role          String    @default("MEMBER") // ADMIN, MODERATOR, MEMBER
+  isHost        Boolean   @default(false)
+  publicKey     String?
+  privateKey    String?   // Encrypted with MASTER_ENCRYPTION_KEY
+  isBanned      Boolean   @default(false)
+  banExpiresAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  messages      Message[]
+  servers       ServerMember[]
+  ownedServers  Server[]
+}
+
+model Server {
+  id          String    @id @default(uuid())
+  name        String
+  imageUrl    String?
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  categories  Category[]
+  members     ServerMember[]
+}
+
+model ServerMember {
+  id        String   @id @default(uuid())
+  userId    String
+  serverId  String
+  role      String   @default("MEMBER")
+  user      User     @relation(fields: [userId], references: [id])
+  server    Server   @relation(fields: [serverId], references: [id])
+
+  @@unique([userId, serverId])
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  serverId  String
+  server    Server    @relation(fields: [serverId], references: [id])
+  channels  Channel[]
+}
+
+model Channel {
+  id          String    @id @default(uuid())
+  name        String
+  type        String    @default("TEXT") // TEXT, VOICE
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  messages    Message[]
+}
+
+model Message {
+  id          String    @id @default(uuid())
+  content     String    // Encrypted content
+  isEmbed     Boolean   @default(false)
+  embedData   String?   // JSON string of embed data
+  gifUrl      String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  channelId   String
+  channel     Channel   @relation(fields: [channelId], references: [id])
+  createdAt   DateTime  @default(now())
+}
+
+model Log {
+  id        String   @id @default(uuid())
+  action    String
+  details   String
+  adminId   String
+  createdAt DateTime @default(now())
+}

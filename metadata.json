@@ -1,0 +1,5 @@
+{
+  "name": "Discord Local Clone",
+  "description": "A secure, high-performance local Discord clone with E2E encryption, real-time messaging, and admin controls.",
+  "requestFramePermissions": []
+}
