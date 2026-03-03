@@ -129,7 +129,7 @@ export const DiscordLayout = () => {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-transparent">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-transparent">
       {/* Server Sidebar */}
       <ServerSidebar 
         servers={servers} 
@@ -208,6 +208,7 @@ export const DiscordLayout = () => {
         isOpen={!!selectedUser}
         onClose={() => setSelectedUser(null)}
         user={selectedUser}
+        onStartDM={handleStartDM}
       />
 
       <Toaster theme="dark" position="bottom-center" />

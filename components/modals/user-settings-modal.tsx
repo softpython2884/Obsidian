@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
 
@@ -71,6 +71,9 @@ export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) =
       <DialogContent className="bg-[#313338] text-[#DBDEE1] border-none max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-white mb-4">User Settings</DialogTitle>
+          <DialogDescription className="sr-only">
+            Manage your account settings and profile information.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

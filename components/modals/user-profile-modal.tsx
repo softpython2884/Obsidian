@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Shield, Github, Youtube, Globe, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -9,16 +9,24 @@ interface UserProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: any;
+  onStartDM?: (userId: string) => void;
 }
 
-export const UserProfileModal = ({ isOpen, onClose, user }: UserProfileModalProps) => {
+export const UserProfileModal = ({ isOpen, onClose, user, onStartDM }: UserProfileModalProps) => {
   if (!user) return null;
 
   const socialLinks = user.socialLinks ? JSON.parse(user.socialLinks) : {};
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#111214] p-0 overflow-hidden border-none w-[600px] max-w-full text-[#DBDEE1]">
+      <DialogContent 
+        className="bg-[#111214] p-0 overflow-hidden border-none w-[600px] max-w-full text-[#DBDEE1]"
+        aria-describedby="user-profile-description"
+      >
+        <DialogTitle className="sr-only">User Profile: {user.pseudo}</DialogTitle>
+        <DialogDescription id="user-profile-description" className="sr-only">
+          Profile details for {user.pseudo}, including bio, roles, and social links.
+        </DialogDescription>
         {/* Banner */}
         <div 
           className="h-[210px] w-full relative"
@@ -62,7 +70,17 @@ export const UserProfileModal = ({ isOpen, onClose, user }: UserProfileModalProp
               </h2>
               <p className="text-[#B5BAC1] text-sm">{user.id}</p>
             </div>
-            <button className="bg-[#248046] hover:bg-[#1A6334] text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+            <button 
+              className="bg-[#248046] hover:bg-[#1A6334] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+              onClick={() => {
+                if (onStartDM) {
+                  onStartDM(user.id);
+                  onClose();
+                } else {
+                  alert('Feature coming soon!');
+                }
+              }}
+            >
               Send Message
             </button>
           </div>
