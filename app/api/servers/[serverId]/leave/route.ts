@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function POST(req: Request, { params }: { params: { serverId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ serverId: string }> }) {
   try {
+    const { serverId } = await params;
     const { userId } = await req.json();
     
     // Check if user is owner
     const server = await prisma.server.findUnique({
-      where: { id: params.serverId },
+      where: { id: serverId },
     });
 
     if (server?.ownerId === userId) {
@@ -18,7 +19,7 @@ export async function POST(req: Request, { params }: { params: { serverId: strin
       where: {
         userId_serverId: {
           userId,
-          serverId: params.serverId,
+          serverId: serverId,
         },
       },
     });

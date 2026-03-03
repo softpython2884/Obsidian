@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function POST(req: Request, { params }: { params: { serverId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ serverId: string }> }) {
   try {
     const { memberId } = await req.json();
     await prisma.serverMember.delete({

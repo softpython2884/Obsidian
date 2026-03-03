@@ -7,7 +7,7 @@ import { ChatArea } from './chat-area';
 import { MemberList } from './member-list';
 import { ServerModal } from '@/components/modals/server-modal';
 import { useAuth } from '@/components/providers/auth-provider';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { UserSettingsModal } from '@/components/modals/user-settings-modal';
 import { UserProfileModal } from '@/components/modals/user-profile-modal';
 import { ServerSettingsModal } from '@/components/modals/server-settings-modal';

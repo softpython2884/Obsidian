@@ -39,25 +39,55 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
   return (
     <div className="flex w-60 flex-col bg-black/60 backdrop-blur-sm">
       {/* Server Header */}
-      <div className="flex h-12 cursor-pointer items-center justify-between border-b border-white/10 px-4 shadow-sm transition-colors hover:bg-white/5">
-        <h1 className="truncate font-bold text-white">{server.name}</h1>
-        <div className="flex items-center space-x-2">
-          {server.inviteCode && (server.ownerId === user?.id || server.isInviteCodeVisible) && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="flex h-12 cursor-pointer items-center justify-between border-b border-white/10 px-4 shadow-sm transition-colors hover:bg-white/5">
+            <h1 className="truncate font-bold text-white">{server.name}</h1>
+            <ChevronDown size={20} className="text-[#B5BAC1]" />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56 bg-[#111214] text-[#B5BAC1] border-[#1E1F22]">
+          <DropdownMenuLabel className="text-xs font-bold uppercase text-[#949BA4] px-2 py-1.5">
+            {server.name}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator className="bg-[#1E1F22]" />
+          
+          {server.inviteCode && (
+            <DropdownMenuItem 
+              className="cursor-pointer text-[#949BA4] focus:bg-[#5865F2] focus:text-white"
+              onClick={() => {
                 navigator.clipboard.writeText(server.inviteCode);
                 toast.success(`Invite code copied: ${server.inviteCode}`);
               }}
-              className="text-[#B5BAC1] hover:text-white"
-              title="Copy Invite Code"
             >
-              <UserPlus size={16} />
-            </button>
+              <UserPlus className="mr-2 h-4 w-4" />
+              <span>Invite People</span>
+            </DropdownMenuItem>
           )}
-          <ChevronDown size={20} className="text-[#B5BAC1]" />
-        </div>
-      </div>
+
+          {(server.ownerId === user?.id) && (
+             <DropdownMenuItem 
+                className="cursor-pointer text-[#949BA4] focus:bg-[#5865F2] focus:text-white"
+                onClick={onOpenServerSettings}
+             >
+               <Settings className="mr-2 h-4 w-4" />
+               <span>Server Settings</span>
+             </DropdownMenuItem>
+          )}
+
+          <DropdownMenuSeparator className="bg-[#1E1F22]" />
+
+          {server.ownerId !== user?.id && (
+            <DropdownMenuItem 
+              className="cursor-pointer text-[#F23F43] focus:bg-[#F23F43] focus:text-white"
+              onClick={onLeaveServer}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Leave Server</span>
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Channel List */}
       <div className="flex-1 overflow-y-auto px-2 py-4 no-scrollbar">

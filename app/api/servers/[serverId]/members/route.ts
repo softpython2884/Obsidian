@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(req: Request, { params }: { params: { serverId: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ serverId: string }> }) {
   try {
+    const { serverId } = await params;
     const members = await prisma.serverMember.findMany({
-      where: { serverId: params.serverId },
+      where: { serverId: serverId },
       include: { user: true },
     });
     return NextResponse.json(members);

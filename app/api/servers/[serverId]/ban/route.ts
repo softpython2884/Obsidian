@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function POST(req: Request, { params }: { params: { serverId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ serverId: string }> }) {
   try {
+    const { serverId } = await params;
     const { memberId } = await req.json();
     const member = await prisma.serverMember.findUnique({
       where: { id: memberId },
@@ -16,7 +17,7 @@ export async function POST(req: Request, { params }: { params: { serverId: strin
     await prisma.serverBan.create({
       data: {
         userId: member.userId,
-        serverId: params.serverId,
+        serverId: serverId,
       },
     });
 

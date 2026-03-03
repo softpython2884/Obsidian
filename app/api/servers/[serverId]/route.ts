@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function PATCH(req: Request, { params }: { params: { serverId: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ serverId: string }> }) {
   try {
+    const { serverId } = await params;
     const { name, imageUrl } = await req.json();
     const server = await prisma.server.update({
-      where: { id: params.serverId },
+      where: { id: serverId },
       data: { name, imageUrl },
     });
     return NextResponse.json(server);
@@ -14,10 +15,11 @@ export async function PATCH(req: Request, { params }: { params: { serverId: stri
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { serverId: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ serverId: string }> }) {
   try {
+    const { serverId } = await params;
     await prisma.server.delete({
-      where: { id: params.serverId },
+      where: { id: serverId },
     });
     return NextResponse.json({ success: true });
   } catch (error) {
