@@ -39,7 +39,7 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
   }
 
   return (
-    <div className="flex w-64 flex-col bg-[#0a0a0a] border-r border-white/5 h-full font-sans">
+    <div className="flex w-64 flex-col bg-[#2B2D31] h-full font-sans">
       {/* Server Header */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -124,13 +124,13 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
       </div>
 
       {/* User Footer - Minimal */}
-      <div className="bg-[#050505] px-3 py-3 border-t border-white/5">
-        <div className="flex items-center justify-between bg-[#111] rounded-xl p-1.5 border border-white/5">
+      <div className="bg-[#232428] px-3 py-3">
+        <div className="flex items-center justify-between bg-[#232428] rounded-xl p-0.5">
           <div
             className="flex flex-1 cursor-pointer items-center rounded-lg px-1 py-1 hover:bg-white/5 transition-colors"
             onClick={onOpenSettings}
           >
-            <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 shadow-inner">
+            <div className="relative h-8 w-8 overflow-hidden rounded-full bg-[#5865F2] shadow-inner">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.pseudo} className="h-full w-full object-cover" />
               ) : (
@@ -139,7 +139,7 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
                 </div>
               )}
               <div className={cn(
-                "absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#111]",
+                "absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#232428]",
                 user?.state === 'ONLINE' ? "bg-emerald-500" :
                   user?.state === 'IDLE' ? "bg-amber-500" :
                     user?.state === 'DND' ? "bg-red-500" : "bg-white/20"

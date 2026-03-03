@@ -46,7 +46,7 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
       });
 
       if (response.ok) {
-        setMembers((prev) => prev.map((m) => 
+        setMembers((prev) => prev.map((m) =>
           m.id === userId ? { ...m, role } : m
         ));
       } else {
@@ -60,105 +60,108 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
 
   if (!server) return <div className="hidden w-60 flex-col bg-black/60 backdrop-blur-sm lg:flex" />;
 
-  const admins = members.filter((m) => m.role === 'ADMIN');
-  const moderators = members.filter((m) => m.role === 'MODERATOR');
-  const onlineMembers = members.filter((m) => m.role === 'MEMBER' && m.state === 'ONLINE');
-  const offlineMembers = members.filter((m) => m.state === 'OFFLINE');
+  const admins = members.filter((m) => m.role === 'ADMIN' && m.user);
+  const moderators = members.filter((m) => m.role === 'MODERATOR' && m.user);
+  const onlineMembers = members.filter((m) => m.role === 'MEMBER' && m.user?.state === 'ONLINE');
+  const offlineMembers = members.filter((m) => m.user?.state === 'OFFLINE');
 
   const handleAction = (action: string, member: any) => {
-    alert(`${action} ${member.pseudo} - Feature coming soon!`);
+    alert(`${action} ${member.user?.pseudo || 'User'} - Feature coming soon!`);
   };
 
-  const MemberItem = ({ member }: { member: any }) => (
-    <ContextMenu>
-      <ContextMenuTrigger>
-        <div className="group flex cursor-pointer items-center rounded px-2 py-1.5 hover:bg-white/10">
-          <div className="relative h-8 w-8 overflow-hidden rounded-full bg-[#5865F2]">
-            {member.avatarUrl ? (
-              <img src={member.avatarUrl} alt={member.pseudo} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white">
-                {member.pseudo.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className={cn(
-              "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#2B2D31]",
-              member.state === 'ONLINE' ? "bg-[#23A559]" : 
-              member.state === 'IDLE' ? "bg-[#F0B232]" : 
-              member.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
-            )} />
+  const MemberItem = ({ member }: { member: any }) => {
+    if (!member.user) return null;
+    return (
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <div className="group flex cursor-pointer items-center rounded px-2 py-1.5 hover:bg-white/[0.05]">
+            <div className="relative h-8 w-8 overflow-hidden rounded-full bg-[#1E1F22]">
+              {member.user.avatarUrl ? (
+                <img src={member.user.avatarUrl} alt={member.user.pseudo} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white/60">
+                  {member.user.pseudo.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className={cn(
+                "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#2B2D31]",
+                member.user.state === 'ONLINE' ? "bg-[#23A559]" :
+                  member.user.state === 'IDLE' ? "bg-[#F0B232]" :
+                    member.user.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
+              )} />
+            </div>
+            <div className="ml-2 flex flex-col overflow-hidden">
+              <span className="truncate text-sm font-bold leading-tight flex items-center" style={{ color: member.role === 'ADMIN' ? '#F04747' : member.role === 'MODERATOR' ? '#FAA61A' : '#949BA4' }}>
+                {member.user.pseudo}
+                {server.ownerId === member.userId && <Crown size={12} className="ml-1 text-[#F0B232]" fill="#F0B232" />}
+                {member.role === 'ADMIN' && server.ownerId !== member.userId && <Shield size={12} className="ml-1 text-[#F04747]" />}
+              </span>
+              {member.user.status && (
+                <span className="truncate text-[10px] text-[#B5BAC1] opacity-60 leading-tight">{member.user.status}</span>
+              )}
+            </div>
           </div>
-          <div className="ml-2 flex flex-col overflow-hidden">
-            <span className="truncate text-sm font-bold leading-tight flex items-center" style={{ color: member.role === 'ADMIN' ? '#F04747' : member.role === 'MODERATOR' ? '#FAA61A' : '#949BA4' }}>
-              {member.pseudo}
-              {server.ownerId === member.id && <Crown size={12} className="ml-1 text-[#F0B232]" fill="#F0B232" />}
-              {member.role === 'ADMIN' && server.ownerId !== member.id && <Shield size={12} className="ml-1 text-[#F04747]" />}
-            </span>
-            {member.status && (
-              <span className="truncate text-[10px] text-[#B5BAC1] leading-tight">{member.status}</span>
-            )}
-          </div>
-        </div>
-      </ContextMenuTrigger>
-      <ContextMenuContent className="w-56 bg-black/90 backdrop-blur-md border-white/10 text-[#DBDEE1]">
-        <ContextMenuItem 
-          className="focus:bg-[#5865F2] focus:text-white cursor-pointer"
-          onClick={() => onViewProfile(member)}
-        >
-          <User className="mr-2 h-4 w-4" />
-          Profile
-        </ContextMenuItem>
-        <ContextMenuItem 
-          className="focus:bg-[#5865F2] focus:text-white cursor-pointer"
-          onClick={() => {
-            if (onStartDM) {
-              onStartDM(member.id);
-            } else {
-              handleAction('Message', member);
-            }
-          }}
-        >
-          <MessageSquare className="mr-2 h-4 w-4" />
-          Message
-        </ContextMenuItem>
-        
-        {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MODERATOR') && (
-          <>
-            <ContextMenuSeparator className="bg-[#1E1F22]" />
-            <ContextMenuItem 
-              className="focus:bg-[#5865F2] focus:text-white cursor-pointer"
-              onClick={() => {
-                setSelectedMember(member);
-                setIsRoleModalOpen(true);
-              }}
-            >
-              <Shield className="mr-2 h-4 w-4" />
-              Manage Roles
-            </ContextMenuItem>
-            <ContextMenuSeparator className="bg-[#1E1F22]" />
-            <ContextMenuItem 
-              className="text-[#F23F43] focus:bg-[#F23F43] focus:text-white cursor-pointer"
-              onClick={() => handleAction('Kick', member)}
-            >
-              <UserMinus className="mr-2 h-4 w-4" />
-              Kick {member.pseudo}
-            </ContextMenuItem>
-            <ContextMenuItem 
-              className="text-[#F23F43] focus:bg-[#F23F43] focus:text-white cursor-pointer"
-              onClick={() => handleAction('Ban', member)}
-            >
-              <Ban className="mr-2 h-4 w-4" />
-              Ban {member.pseudo}
-            </ContextMenuItem>
-          </>
-        )}
-      </ContextMenuContent>
-    </ContextMenu>
-  );
+        </ContextMenuTrigger>
+        <ContextMenuContent className="w-56 bg-[#111214] border-black/20 text-[#DBDEE1]">
+          <ContextMenuItem
+            className="focus:bg-[#5865F2] focus:text-white cursor-pointer"
+            onClick={() => onViewProfile(member.user)}
+          >
+            <User className="mr-2 h-4 w-4" />
+            Profile
+          </ContextMenuItem>
+          <ContextMenuItem
+            className="focus:bg-[#5865F2] focus:text-white cursor-pointer"
+            onClick={() => {
+              if (onStartDM) {
+                onStartDM(member.userId);
+              } else {
+                handleAction('Message', member);
+              }
+            }}
+          >
+            <MessageSquare className="mr-2 h-4 w-4" />
+            Message
+          </ContextMenuItem>
+
+          {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MODERATOR') && (
+            <>
+              <ContextMenuSeparator className="bg-white/5" />
+              <ContextMenuItem
+                className="focus:bg-[#5865F2] focus:text-white cursor-pointer"
+                onClick={() => {
+                  setSelectedMember(member);
+                  setIsRoleModalOpen(true);
+                }}
+              >
+                <Shield className="mr-2 h-4 w-4" />
+                Manage Roles
+              </ContextMenuItem>
+              <ContextMenuSeparator className="bg-white/5" />
+              <ContextMenuItem
+                className="text-[#F23F43] focus:bg-[#F23F43] focus:text-white cursor-pointer"
+                onClick={() => handleAction('Kick', member)}
+              >
+                <UserMinus className="mr-2 h-4 w-4" />
+                Kick {member.user.pseudo}
+              </ContextMenuItem>
+              <ContextMenuItem
+                className="text-[#F23F43] focus:bg-[#F23F43] focus:text-white cursor-pointer"
+                onClick={() => handleAction('Ban', member)}
+              >
+                <Ban className="mr-2 h-4 w-4" />
+                Ban {member.user.pseudo}
+              </ContextMenuItem>
+            </>
+          )}
+        </ContextMenuContent>
+      </ContextMenu>
+    );
+  };
 
   return (
     <>
-      <div className="hidden w-60 flex-col bg-black/60 backdrop-blur-sm lg:flex">
+      <div className="hidden w-60 flex-col bg-[#2B2D31] lg:flex">
         <div className="flex-1 overflow-y-auto px-2 py-4 no-scrollbar">
           {admins.length > 0 && (
             <div className="mb-4">

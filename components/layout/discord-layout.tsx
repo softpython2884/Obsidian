@@ -155,7 +155,7 @@ export const DiscordLayout = () => {
   };
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden bg-transparent">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-[#1E1F22]">
       {/* Server Sidebar */}
       <ServerSidebar
         servers={servers}

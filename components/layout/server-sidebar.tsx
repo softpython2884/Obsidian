@@ -14,7 +14,7 @@ interface ServerSidebarProps {
 
 export const ServerSidebar = ({ servers, activeServer, onSelectServer, onOpenModal }: ServerSidebarProps) => {
   return (
-    <div className="flex w-[72px] flex-col items-center space-y-4 bg-[#050505] py-4 border-r border-white/5 h-full z-20">
+    <div className="flex w-[72px] flex-col items-center space-y-4 bg-[#1E1F22] py-4 h-full z-20">
       {/* Home Button */}
       <TooltipProvider>
         <Tooltip delayDuration={0}>
