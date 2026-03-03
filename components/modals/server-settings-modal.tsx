@@ -239,23 +239,40 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="uppercase text-xs font-bold text-[#B5BAC1]">Server Image URL</Label>
+                    <Label className="uppercase text-xs font-bold text-[#B5BAC1]">Server Avatar URL</Label>
                     <Input
                       value={serverImage}
                       onChange={(e) => setServerImage(e.target.value)}
-                      className="bg-[#1E1F22] border-none text-white"
+                      placeholder="https://example.com/avatar.png"
+                      className="bg-[#1E1F22] border-none text-white focus-visible:ring-1 focus-visible:ring-[#5865F2]"
                     />
                   </div>
                 </div>
-                <div className="w-32 h-32 bg-[#1E1F22] rounded-full flex items-center justify-center overflow-hidden shrink-0">
-                  {serverImage ? (
-                    <img src={serverImage} alt="Server" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-2xl font-bold">{serverName.charAt(0)}</div>
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-32 h-32 bg-[#1E1F22] rounded-full flex items-center justify-center overflow-hidden shrink-0 border-4 border-[#2B2D31] shadow-xl">
+                    {serverImage ? (
+                      <img src={serverImage} alt="Server" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-3xl font-bold text-white/20 select-none">
+                        {serverName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  {serverImage && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-red-400 hover:text-red-300 hover:bg-red-400/10 h-7"
+                      onClick={() => setServerImage('')}
+                    >
+                      Remove
+                    </Button>
                   )}
                 </div>
               </div>
-              <Button onClick={handleSaveOverview} className="bg-[#23A559] hover:bg-[#23A559]/80 text-white">Save Changes</Button>
+              <div className="flex justify-end pt-4 border-t border-[#1E1F22]">
+                <Button onClick={handleSaveOverview} className="bg-[#23A559] hover:bg-[#23A559]/80 text-white min-w-[120px]">Save Changes</Button>
+              </div>
             </TabsContent>
 
             <TabsContent value="roles" className="mt-0 h-full flex flex-col">

@@ -127,7 +127,26 @@ export const DiscordLayout = () => {
   };
 
   const handleStartDM = async (targetUserId: string) => {
-    // ... existing code ...
+    if (!user) return;
+    try {
+      const res = await fetch('/api/channels/dm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, targetUserId })
+      });
+      if (res.ok) {
+        const dmChannel = await res.json();
+        setActiveServer(null); // Switch to DM view
+        setActiveChannel(dmChannel);
+        setSelectedUser(null); // Close profile modal if open
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to start DM");
+      }
+    } catch (error) {
+      console.error("Error starting DM:", error);
+      toast.error("Failed to start DM");
+    }
   };
 
   const handleLeaveServer = async (serverId: string) => {

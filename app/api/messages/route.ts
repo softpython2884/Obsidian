@@ -4,10 +4,10 @@ import { encrypt } from '@/lib/encryption';
 
 export async function POST(req: Request) {
   try {
-    const { content, userId, channelId, gifUrl, isEmbed, embedData } = await req.json();
+    const { content, userId, channelId, gifUrl, isEmbed, embedData, isForwarded, forwardedFrom } = await req.json();
 
     // Encrypt content before saving
-    const encryptedContent = encrypt(content);
+    const encryptedContent = content ? encrypt(content) : "";
 
     const message = await prisma.message.create({
       data: {
@@ -16,7 +16,9 @@ export async function POST(req: Request) {
         channelId,
         gifUrl,
         isEmbed: isEmbed || false,
-        embedData: embedData ? JSON.stringify(embedData) : null,
+        embedData: embedData ? (typeof embedData === 'string' ? embedData : JSON.stringify(embedData)) : null,
+        isForwarded: isForwarded || false,
+        forwardedFrom: forwardedFrom || null,
       },
       include: {
         user: {

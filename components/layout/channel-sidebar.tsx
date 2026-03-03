@@ -67,7 +67,7 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
             </DropdownMenuItem>
           )}
 
-          {(server.ownerId === user?.id) && (
+          {(server.ownerId === user?.id || user?.role === 'ADMIN') && (
             <DropdownMenuItem
               className="cursor-pointer text-white/80 focus:bg-white/5 focus:text-white rounded-lg text-xs font-medium"
               onClick={onOpenServerSettings}

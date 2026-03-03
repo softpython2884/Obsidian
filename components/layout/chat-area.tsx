@@ -165,6 +165,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
         body: JSON.stringify({
           content: messageToForward.content,
           channelId: targetChannelId,
+          userId: user.id,
           isForwarded: true,
           forwardedFrom: messageToForward.id,
         }),
@@ -378,7 +379,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-black/20 px-6 bg-[#313338] z-10">
         <div className="flex items-center space-x-3">
           {channel.type === 'DM' ? (
-            <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+            <div className="h-8 w-8 rounded-full bg-[#5865F2]/10 flex items-center justify-center text-[#5865F2]">
               <span className="text-sm font-bold">@</span>
             </div>
           ) : (
@@ -614,7 +615,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
         <div className="mb-2 h-4 text-[10px] text-white/30 px-2 font-mono flex justify-between">
           <span>
             {typingUsers.length > 0 && (
-              <span className="animate-pulse text-emerald-500">
+              <span className="animate-pulse text-[#5865F2]">
                 {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
               </span>
             )}
@@ -675,7 +676,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
             <button
               className={cn(
                 "p-2 rounded-xl transition-all duration-200",
-                inputValue.trim() ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600" : "text-white/20 cursor-not-allowed"
+                inputValue.trim() ? "bg-[#5865F2] text-white shadow-lg shadow-[#5865F2]/20 hover:bg-[#4752C4]" : "text-white/20 cursor-not-allowed"
               )}
               onClick={handleSendMessage}
               disabled={!inputValue.trim()}

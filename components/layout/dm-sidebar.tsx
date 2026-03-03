@@ -21,7 +21,7 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
         .then((res) => res.json())
         .then((data) => setDms(data));
     }
-  }, [user]);
+  }, [user, activeChannel?.id]);
 
   return (
     <div className="flex w-60 flex-col bg-[#2B2D31]">
