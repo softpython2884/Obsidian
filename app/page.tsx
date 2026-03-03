@@ -7,17 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LogIn } from 'lucide-react';
 
+import { DiscordLoading } from '@/components/layout/discord-loading';
+
 export default function Home() {
   const { user, isLoading, login } = useAuth();
   const [pseudo, setPseudo] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[#1E1F22]">
-        <div className="text-xl font-semibold text-white">Loading...</div>
-      </div>
-    );
+    return <DiscordLoading />;
   }
 
   if (!user) {
@@ -26,7 +24,7 @@ export default function Home() {
         <div className="w-full max-w-md rounded-lg bg-[#313338] p-8 shadow-2xl">
           <h1 className="mb-6 text-center text-2xl font-bold text-white">Welcome back!</h1>
           <p className="mb-8 text-center text-[#B5BAC1]">Enter a pseudo to join the local network.</p>
-          
+
           <div className="space-y-4">
             <div>
               <label className="mb-2 block text-xs font-bold uppercase text-[#B5BAC1]">Pseudo</label>
@@ -38,7 +36,7 @@ export default function Home() {
                 onKeyDown={(e) => e.key === 'Enter' && pseudo && login(pseudo)}
               />
             </div>
-            
+
             <Button
               onClick={async () => {
                 if (!pseudo) return;

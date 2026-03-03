@@ -47,7 +47,7 @@ export const ServerSidebar = ({ servers, activeServer, onSelectServer, onOpenMod
 
       {/* Server List */}
       <div className="flex-1 space-y-3 overflow-y-auto w-full flex flex-col items-center no-scrollbar py-2">
-        {servers.map((server) => (
+        {Array.isArray(servers) && servers.map((server) => (
           <TooltipProvider key={server.id}>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>

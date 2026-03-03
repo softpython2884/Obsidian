@@ -35,12 +35,17 @@ export const DiscordLayout = () => {
       fetch(`/api/servers?userId=${user.id}`)
         .then((res) => res.json())
         .then((data) => {
-          setServers(data);
-          if (data.length > 0) {
-            setActiveServer(data[0]);
-            if (data[0].categories?.[0]?.channels?.[0]) {
-              setActiveChannel(data[0].categories[0].channels[0]);
+          if (Array.isArray(data)) {
+            setServers(data);
+            if (data.length > 0) {
+              setActiveServer(data[0]);
+              if (data[0].categories?.[0]?.channels?.[0]) {
+                setActiveChannel(data[0].categories[0].channels[0]);
+              }
             }
+          } else {
+            console.error('Failed to fetch servers: expected array, got', data);
+            setServers([]);
           }
         });
     }
@@ -54,7 +59,7 @@ export const DiscordLayout = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, ownerId: user.id }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         alert(`Failed to create server: ${errorData.error || 'Unknown error'}`);
@@ -90,12 +95,12 @@ export const DiscordLayout = () => {
       }
 
       const joinedServer = await response.json();
-      
+
       // Check if already in server list to avoid duplicates
       if (!servers.find(s => s.id === joinedServer.id)) {
         setServers([...servers, joinedServer]);
       }
-      
+
       setActiveServer(joinedServer);
       if (joinedServer.categories?.[0]?.channels?.[0]) {
         setActiveChannel(joinedServer.categories[0].channels[0]);
@@ -114,33 +119,33 @@ export const DiscordLayout = () => {
   const handleLeaveServer = async (serverId: string) => {
     if (!user) return;
     if (confirm("Are you sure you want to leave this server?")) {
-        try {
-            const res = await fetch(`/api/servers/${serverId}/leave`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id })
-            });
-            if (res.ok) {
-                setServers(servers.filter(s => s.id !== serverId));
-                setActiveServer(null);
-                setActiveChannel(null);
-                toast.success("Left server");
-            } else {
-                const data = await res.json();
-                toast.error(data.error || "Failed to leave server");
-            }
-        } catch (error) {
-            toast.error("Failed to leave server");
+      try {
+        const res = await fetch(`/api/servers/${serverId}/leave`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        });
+        if (res.ok) {
+          setServers(servers.filter(s => s.id !== serverId));
+          setActiveServer(null);
+          setActiveChannel(null);
+          toast.success("Left server");
+        } else {
+          const data = await res.json();
+          toast.error(data.error || "Failed to leave server");
         }
+      } catch (error) {
+        toast.error("Failed to leave server");
+      }
     }
   };
 
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden bg-transparent">
       {/* Server Sidebar */}
-      <ServerSidebar 
-        servers={servers} 
-        activeServer={activeServer} 
+      <ServerSidebar
+        servers={servers}
+        activeServer={activeServer}
         onSelectServer={(server) => {
           setActiveServer(server);
           if (server) {
@@ -155,43 +160,43 @@ export const DiscordLayout = () => {
         }}
         onOpenModal={() => setIsServerModalOpen(true)}
       />
-      
+
       {activeServer ? (
         <>
           {/* Channel Sidebar */}
-          <ChannelSidebar 
-            server={activeServer} 
-            activeChannel={activeChannel} 
+          <ChannelSidebar
+            server={activeServer}
+            activeChannel={activeChannel}
             onSelectChannel={setActiveChannel}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
             onOpenServerSettings={() => setIsServerSettingsModalOpen(true)}
             onLeaveServer={() => handleLeaveServer(activeServer.id)}
           />
-          
+
           {/* Main Chat Area */}
-          <ChatArea 
-            channel={activeChannel} 
+          <ChatArea
+            channel={activeChannel}
             server={activeServer}
             onViewProfile={setSelectedUser}
           />
-          
+
           {/* Member List */}
-          <MemberList 
-            server={activeServer} 
+          <MemberList
+            server={activeServer}
             onViewProfile={setSelectedUser}
             onStartDM={handleStartDM}
           />
         </>
       ) : (
         <>
-          <DMSidebar 
-            activeChannel={activeChannel} 
+          <DMSidebar
+            activeChannel={activeChannel}
             onSelectChannel={setActiveChannel}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
           />
           {activeChannel ? (
-            <ChatArea 
-              channel={activeChannel} 
+            <ChatArea
+              channel={activeChannel}
               onViewProfile={setSelectedUser}
             />
           ) : (
@@ -201,9 +206,9 @@ export const DiscordLayout = () => {
       )}
 
       {/* Server Modal */}
-      <ServerModal 
-        isOpen={isServerModalOpen} 
-        onClose={() => setIsServerModalOpen(false)} 
+      <ServerModal
+        isOpen={isServerModalOpen}
+        onClose={() => setIsServerModalOpen(false)}
         onCreateServer={handleCreateServer}
         onJoinServer={handleJoinServer}
       />
@@ -228,13 +233,13 @@ export const DiscordLayout = () => {
         onClose={() => setIsServerSettingsModalOpen(false)}
         server={activeServer}
         onUpdateServer={(updated) => {
-            setActiveServer(updated);
-            setServers(servers.map(s => s.id === updated.id ? updated : s));
+          setActiveServer(updated);
+          setServers(servers.map(s => s.id === updated.id ? updated : s));
         }}
         onDeleteServer={(serverId) => {
-            setServers(servers.filter(s => s.id !== serverId));
-            setActiveServer(null);
-            setActiveChannel(null);
+          setServers(servers.filter(s => s.id !== serverId));
+          setActiveServer(null);
+          setActiveChannel(null);
         }}
       />
 

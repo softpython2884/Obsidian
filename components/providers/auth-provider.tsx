@@ -27,9 +27,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
-  login: async () => {},
-  logout: () => {},
-  updateUser: () => {},
+  login: async () => { },
+  logout: () => { },
+  updateUser: () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(JSON.parse(storedUser));
       }
       setIsLoading(false);
-    }, 0);
+    }, 4000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pseudo, avatarUrl }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         alert(`Login failed: ${errorData.error || 'Unknown error'}`);
