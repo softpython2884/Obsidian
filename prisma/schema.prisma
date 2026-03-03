@@ -94,6 +94,9 @@ model Message {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @default(now()) @updatedAt
   reactions   Reaction[]
+  
+  isForwarded   Boolean   @default(false)
+  forwardedFrom String?   // ID or Link of the original message
 }
 
 model Reaction {

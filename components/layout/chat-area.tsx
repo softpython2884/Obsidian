@@ -1,19 +1,38 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Hash, PlusCircle, Gift, Sticker, Smile, Send, Shield, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Hash, PlusCircle, Gift, Sticker, Smile, Send, Shield, Pencil, Trash2, X, Check, Image as ImageIcon, CornerUpRight } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { decrypt } from '@/lib/encryption';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
+import ReactMarkdown from 'react-markdown';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+import { GifPicker } from '@/components/pickers/gif-picker';
+import { EmbedCreatorModal } from '@/components/modals/embed-creator-modal';
+import { ForwardMessageModal } from '@/components/modals/forward-message-modal';
 
 interface ChatAreaProps {
   channel: any;
+  server?: any;
   onViewProfile: (user: any) => void;
 }
 
-export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
+export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
   const { user } = useAuth();
   const { socket } = useSocket();
   const [messages, setMessages] = useState<any[]>([]);
@@ -23,6 +42,10 @@ export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [showNewMessages, setShowNewMessages] = useState(false);
   
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
+  const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
+  const [messageToForward, setMessageToForward] = useState<any>(null);
+
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
 
@@ -101,6 +124,76 @@ export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
       setTimeout(() => scrollToBottom(), 0);
     }
   }, [messages, isNearBottom]);
+
+  const handleSendEmbed = async (embedData: any) => {
+    if (!channel || !user) return;
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: '',
+          channelId: channel.id,
+          isEmbed: true,
+          embedData: JSON.stringify(embedData),
+        }),
+      });
+      if (response.ok) {
+        const newMessage = await response.json();
+        socket?.emit('new_message', newMessage);
+      }
+    } catch (error) {
+      console.error('Error sending embed:', error);
+    }
+  };
+
+  const handleForwardMessage = async (targetChannelId: string) => {
+    if (!messageToForward || !user) return;
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: messageToForward.content,
+          channelId: targetChannelId,
+          isForwarded: true,
+          forwardedFrom: messageToForward.id, // Or link: `${window.location.origin}/channels/${server?.id}/${channel.id}/${messageToForward.id}`
+        }),
+      });
+      if (response.ok) {
+        // If forwarding to current channel, emit socket event
+        if (targetChannelId === channel.id) {
+            const newMessage = await response.json();
+            socket?.emit('new_message', newMessage);
+        } else {
+            alert('Message forwarded!');
+        }
+      }
+    } catch (error) {
+      console.error('Error forwarding message:', error);
+    }
+  };
+
+  const handleGifSelect = async (gifUrl: string) => {
+    if (!channel || !user) return;
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: '',
+          channelId: channel.id,
+          gifUrl,
+        }),
+      });
+      if (response.ok) {
+        const newMessage = await response.json();
+        socket?.emit('new_message', newMessage);
+      }
+    } catch (error) {
+      console.error('Error sending GIF:', error);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !user || !channel) return;
@@ -275,13 +368,14 @@ export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
             (new Date(msg.createdAt).getTime() - new Date(messages[index - 1].createdAt).getTime()) < 60000;
 
           return (
-            <div 
-              key={msg.id} 
-              className={cn(
-                "group flex items-start space-x-4 px-4 hover:bg-white/5 pr-4",
-                isCompact ? "py-0.5" : "py-1 mt-4"
-              )}
-            >
+            <ContextMenu key={msg.id}>
+              <ContextMenuTrigger>
+                <div 
+                  className={cn(
+                    "group flex items-start space-x-4 px-4 hover:bg-white/5 pr-4",
+                    isCompact ? "py-0.5" : "py-1 mt-4"
+                  )}
+                >
               {!isCompact ? (
                 <div 
                   className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#5865F2] mt-0.5 cursor-pointer hover:opacity-80 transition-opacity"
@@ -333,10 +427,38 @@ export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
                     </div>
                   </div>
                 ) : (
-                  <p className={cn("text-[#DBDEE1] whitespace-pre-wrap break-words", isCompact && "leading-[1.375rem]")}>
-                    {msg.content}
+                  <div className={cn("text-[#DBDEE1] break-words markdown-content", isCompact && "leading-[1.375rem]")}>
+                    {msg.isForwarded && (
+                      <div className="flex items-center text-xs text-[#949BA4] mb-1 italic">
+                        <CornerUpRight size={12} className="mr-1" />
+                        Forwarded message
+                        {msg.forwardedFrom && (
+                          <span className="ml-1 text-[#00AFF4] cursor-pointer hover:underline" onClick={() => alert(`Original Message ID: ${msg.forwardedFrom}`)}>
+                            (View Original)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
                     {msg.updatedAt !== msg.createdAt && <span className="text-[10px] text-[#949BA4] ml-1">(edited)</span>}
-                  </p>
+                    
+                    {msg.isEmbed && msg.embedData && (() => {
+                      try {
+                        const embed = JSON.parse(msg.embedData);
+                        return (
+                          <div className="mt-2 rounded bg-[#2B2D31] border-l-4 p-4 max-w-md grid gap-1" style={{ borderLeftColor: embed.color || '#5865F2' }}>
+                            {embed.title && <h4 className="font-bold text-white">{embed.title}</h4>}
+                            {embed.description && <div className="text-sm text-[#DBDEE1] whitespace-pre-wrap"><ReactMarkdown>{embed.description}</ReactMarkdown></div>}
+                            {embed.image?.url && <img src={embed.image.url} alt="Embed" className="mt-2 rounded max-h-60 object-cover w-full" />}
+                            {embed.footer?.text && <div className="text-xs text-[#949BA4] mt-1">{embed.footer.text}</div>}
+                          </div>
+                        );
+                      } catch (e) {
+                        return null;
+                      }
+                    })()}
+                  </div>
                 )}
 
                 {msg.gifUrl && (
@@ -373,6 +495,38 @@ export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
                 </div>
               </div>
             </div>
+              </ContextMenuTrigger>
+              <ContextMenuContent className="bg-[#111214] border-[#1E1F22] text-[#DBDEE1]">
+                <ContextMenuItem onClick={() => alert('Add Reaction - Coming soon!')}>
+                  Add Reaction
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => handleEditMessage(msg)} disabled={user?.id !== msg.user.id}>
+                  Edit Message
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => alert('Reply - Coming soon!')}>
+                  Reply
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => navigator.clipboard.writeText(msg.content)}>
+                  Copy Text
+                </ContextMenuItem>
+                <ContextMenuItem 
+                  onClick={() => {
+                    setMessageToForward(msg);
+                    setIsForwardModalOpen(true);
+                  }}
+                >
+                  Forward Message
+                </ContextMenuItem>
+                <ContextMenuSeparator className="bg-[#1E1F22]" />
+                <ContextMenuItem 
+                  className="text-[#F23F43] focus:text-[#F23F43]" 
+                  onClick={() => handleDeleteMessage(msg.id)}
+                  disabled={user?.id !== msg.user.id && user?.role !== 'ADMIN'}
+                >
+                  Delete Message
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
           );
         })}
         <div ref={messagesEndRef} />
@@ -401,9 +555,35 @@ export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
             className="flex-1 bg-transparent text-[#DBDEE1] outline-none placeholder:text-[#949BA4] min-w-0"
           />
           <div className="flex items-center space-x-3 text-[#B5BAC1] shrink-0 ml-2">
-            <Gift size={24} className="cursor-pointer hover:text-[#DBDEE1]" />
-            <Sticker size={24} className="cursor-pointer hover:text-[#DBDEE1]" />
-            <Smile size={24} className="cursor-pointer hover:text-[#DBDEE1]" />
+            <Gift 
+              size={24} 
+              className="cursor-pointer hover:text-[#DBDEE1]" 
+              onClick={() => setIsEmbedModalOpen(true)}
+            />
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <ImageIcon size={24} className="cursor-pointer hover:text-[#DBDEE1]" />
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0 border-none bg-[#313338] shadow-lg" side="top" align="center">
+                <GifPicker onGifSelect={handleGifSelect} />
+              </PopoverContent>
+            </Popover>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Smile size={24} className="cursor-pointer hover:text-[#DBDEE1]" />
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0 border-none bg-transparent shadow-none" side="top" align="end">
+                <EmojiPicker 
+                  theme={Theme.DARK}
+                  onEmojiClick={(emojiData: EmojiClickData) => {
+                    setInputValue((prev) => prev + emojiData.emoji);
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+
             <Send 
               size={24} 
               className="cursor-pointer hover:text-[#DBDEE1]" 
@@ -419,6 +599,18 @@ export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
           )}
         </div>
       </div>
+      <EmbedCreatorModal 
+        isOpen={isEmbedModalOpen} 
+        onClose={() => setIsEmbedModalOpen(false)} 
+        onSend={handleSendEmbed} 
+      />
+      
+      <ForwardMessageModal 
+        isOpen={isForwardModalOpen} 
+        onClose={() => setIsForwardModalOpen(false)} 
+        onForward={handleForwardMessage}
+        currentServerId={server?.id}
+      />
     </div>
   );
 };

@@ -162,6 +162,7 @@ export const DiscordLayout = () => {
           {/* Main Chat Area */}
           <ChatArea 
             channel={activeChannel} 
+            server={activeServer}
             onViewProfile={setSelectedUser}
           />
           

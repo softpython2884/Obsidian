@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/context-menu";
 import { useAuth } from '@/components/providers/auth-provider';
 
+import { RoleManagementModal } from '@/components/modals/role-management-modal';
+
 interface MemberListProps {
   server: any;
   onViewProfile: (user: any) => void;
@@ -24,6 +26,8 @@ interface MemberListProps {
 export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps) => {
   const { user: currentUser } = useAuth();
   const [members, setMembers] = useState<any[]>([]);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
   useEffect(() => {
     if (server) {
@@ -32,6 +36,27 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
         .then((data) => setMembers(data));
     }
   }, [server]);
+
+  const handleUpdateRole = async (userId: string, role: string) => {
+    try {
+      const response = await fetch(`/api/servers/${server.id}/members/${userId}/role`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      });
+
+      if (response.ok) {
+        setMembers((prev) => prev.map((m) => 
+          m.id === userId ? { ...m, role } : m
+        ));
+      } else {
+        alert('Failed to update role');
+      }
+    } catch (error) {
+      console.error('Error updating role:', error);
+      alert('Failed to update role');
+    }
+  };
 
   if (!server) return <div className="hidden w-60 flex-col bg-black/60 backdrop-blur-sm lg:flex" />;
 
@@ -100,23 +125,16 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
         {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MODERATOR') && (
           <>
             <ContextMenuSeparator className="bg-[#1E1F22]" />
-            <ContextMenuSub>
-              <ContextMenuSubTrigger className="focus:bg-[#5865F2] focus:text-white cursor-pointer">
-                <Shield className="mr-2 h-4 w-4" />
-                Roles
-              </ContextMenuSubTrigger>
-              <ContextMenuSubContent className="bg-[#111214] border-[#1E1F22] text-[#DBDEE1] min-w-[12rem] ml-1">
-                <ContextMenuItem className="focus:bg-[#5865F2] focus:text-white cursor-pointer" onClick={() => handleAction('Set Role: Admin', member)}>
-                  Admin
-                </ContextMenuItem>
-                <ContextMenuItem className="focus:bg-[#5865F2] focus:text-white cursor-pointer" onClick={() => handleAction('Set Role: Moderator', member)}>
-                  Moderator
-                </ContextMenuItem>
-                <ContextMenuItem className="focus:bg-[#5865F2] focus:text-white cursor-pointer" onClick={() => handleAction('Set Role: Member', member)}>
-                  Member
-                </ContextMenuItem>
-              </ContextMenuSubContent>
-            </ContextMenuSub>
+            <ContextMenuItem 
+              className="focus:bg-[#5865F2] focus:text-white cursor-pointer"
+              onClick={() => {
+                setSelectedMember(member);
+                setIsRoleModalOpen(true);
+              }}
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              Manage Roles
+            </ContextMenuItem>
             <ContextMenuSeparator className="bg-[#1E1F22]" />
             <ContextMenuItem 
               className="text-[#F23F43] focus:bg-[#F23F43] focus:text-white cursor-pointer"
@@ -139,33 +157,42 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
   );
 
   return (
-    <div className="hidden w-60 flex-col bg-black/60 backdrop-blur-sm lg:flex">
-      <div className="flex-1 overflow-y-auto px-2 py-4 no-scrollbar">
-        {admins.length > 0 && (
-          <div className="mb-4">
-            <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Admins — {admins.length}</h3>
-            {admins.map((member) => <MemberItem key={member.id} member={member} />)}
-          </div>
-        )}
-        {moderators.length > 0 && (
-          <div className="mb-4">
-            <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Moderators — {moderators.length}</h3>
-            {moderators.map((member) => <MemberItem key={member.id} member={member} />)}
-          </div>
-        )}
-        {onlineMembers.length > 0 && (
-          <div className="mb-4">
-            <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Online — {onlineMembers.length}</h3>
-            {onlineMembers.map((member) => <MemberItem key={member.id} member={member} />)}
-          </div>
-        )}
-        {offlineMembers.length > 0 && (
-          <div className="mb-4">
-            <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Offline — {offlineMembers.length}</h3>
-            {offlineMembers.map((member) => <MemberItem key={member.id} member={member} />)}
-          </div>
-        )}
+    <>
+      <div className="hidden w-60 flex-col bg-black/60 backdrop-blur-sm lg:flex">
+        <div className="flex-1 overflow-y-auto px-2 py-4 no-scrollbar">
+          {admins.length > 0 && (
+            <div className="mb-4">
+              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Admins — {admins.length}</h3>
+              {admins.map((member) => <MemberItem key={member.id} member={member} />)}
+            </div>
+          )}
+          {moderators.length > 0 && (
+            <div className="mb-4">
+              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Moderators — {moderators.length}</h3>
+              {moderators.map((member) => <MemberItem key={member.id} member={member} />)}
+            </div>
+          )}
+          {onlineMembers.length > 0 && (
+            <div className="mb-4">
+              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Online — {onlineMembers.length}</h3>
+              {onlineMembers.map((member) => <MemberItem key={member.id} member={member} />)}
+            </div>
+          )}
+          {offlineMembers.length > 0 && (
+            <div className="mb-4">
+              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Offline — {offlineMembers.length}</h3>
+              {offlineMembers.map((member) => <MemberItem key={member.id} member={member} />)}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      <RoleManagementModal
+        isOpen={isRoleModalOpen}
+        onClose={() => setIsRoleModalOpen(false)}
+        user={selectedMember}
+        onUpdateRole={handleUpdateRole}
+      />
+    </>
   );
 };

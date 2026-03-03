@@ -17,6 +17,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ serverId
             avatarUrl: true,
             state: true,
             status: true,
+            bio: true,
+            createdAt: true,
+            socialLinks: true,
+            bannerUrl: true,
+            accentColor: true,
           }
         }
       }

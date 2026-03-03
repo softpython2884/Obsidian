@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     const user = await prisma.user.create({
       data: {
         pseudo,
-        avatarUrl,
+        avatarUrl: avatarUrl || 'https://github.com/shadcn.png',
         publicKey,
         privateKey: encryptedPrivateKey,
         isHost,
@@ -43,6 +43,11 @@ export async function GET() {
         state: true,
         status: true,
         role: true,
+        bio: true,
+        createdAt: true,
+        socialLinks: true,
+        bannerUrl: true,
+        accentColor: true,
       }
     });
     return NextResponse.json(users);

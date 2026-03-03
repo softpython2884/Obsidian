@@ -25,6 +25,13 @@ export async function POST(req: Request) {
             pseudo: true,
             avatarUrl: true,
             role: true,
+            bio: true,
+            createdAt: true,
+            socialLinks: true,
+            bannerUrl: true,
+            accentColor: true,
+            state: true,
+            status: true,
           }
         }
       }
@@ -55,6 +62,13 @@ export async function GET(req: Request) {
             pseudo: true,
             avatarUrl: true,
             role: true,
+            bio: true,
+            createdAt: true,
+            socialLinks: true,
+            bannerUrl: true,
+            accentColor: true,
+            state: true,
+            status: true,
           }
         }
       },
