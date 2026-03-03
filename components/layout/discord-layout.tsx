@@ -63,7 +63,7 @@ export const DiscordLayout = () => {
 
       fetchServers();
     }
-  }, [user, logout]);
+  }, [user?.id, logout]);
 
   const handleCreateServer = async (name: string) => {
     if (!user) return;
@@ -174,8 +174,9 @@ export const DiscordLayout = () => {
   };
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden bg-[#1E1F22]">
-      {/* Server Sidebar */}
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-transparent">
+      {/* Background Layer managed by globals.css body style */}
+      <Toaster theme="dark" position="bottom-center" />
       <ServerSidebar
         servers={servers}
         activeServer={activeServer}

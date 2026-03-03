@@ -161,7 +161,7 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
 
   return (
     <>
-      <div className="hidden w-60 flex-col bg-[#2B2D31] lg:flex">
+      <div className="hidden w-60 flex-col bg-glass lg:flex border-l border-white/5">
         <div className="flex-1 overflow-y-auto px-2 py-4 no-scrollbar">
           {admins.length > 0 && (
             <div className="mb-4">

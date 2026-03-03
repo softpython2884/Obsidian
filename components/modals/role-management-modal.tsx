@@ -22,7 +22,7 @@ export const RoleManagementModal = ({ isOpen, onClose, user, onUpdateRole }: Rol
   const [selectedRole, setSelectedRole] = useState(user?.role || 'MEMBER');
 
   const handleSave = () => {
-    onUpdateRole(user.id, selectedRole);
+    onUpdateRole(user.userId, selectedRole);
     onClose();
   };
 
@@ -37,7 +37,7 @@ export const RoleManagementModal = ({ isOpen, onClose, user, onUpdateRole }: Rol
             Select a role to assign to this user.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-2 mt-4">
           {roles.map((role) => (
             <div

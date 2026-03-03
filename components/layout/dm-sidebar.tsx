@@ -24,7 +24,7 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
   }, [user, activeChannel?.id]);
 
   return (
-    <div className="flex w-60 flex-col bg-[#2B2D31]">
+    <div className="flex w-60 flex-col bg-glass h-full border-r border-white/5">
       {/* Search/Header */}
       <div className="flex h-12 items-center border-b border-white/10 px-4 shadow-sm">
         <button
@@ -96,7 +96,7 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
       </div>
 
       {/* User Footer */}
-      <div className="flex h-[52px] items-center bg-[#232428] px-2">
+      <div className="flex h-[52px] items-center bg-black/20 px-2 border-t border-white/5">
         <div
           className="flex flex-1 cursor-pointer items-center rounded px-1 py-1 hover:bg-white/10"
           onClick={onOpenSettings}

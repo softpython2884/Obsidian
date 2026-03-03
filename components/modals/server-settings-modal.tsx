@@ -205,6 +205,8 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-[#313338] text-white border-none max-w-4xl h-[80vh] flex p-0 overflow-hidden">
+        <DialogTitle className="sr-only">Server Settings</DialogTitle>
+        <DialogDescription className="sr-only">Manage your server settings, roles, and members.</DialogDescription>
         <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="flex w-full h-full">
           <div className="w-60 bg-[#2B2D31] p-4 flex flex-col">
             <h2 className="font-bold text-[#949BA4] text-xs uppercase mb-4 px-2">Server Settings</h2>
@@ -375,7 +377,7 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {member.user.id !== user?.id && member.user.id !== server.ownerId && (
+                      {(member.user.id !== user?.id && (user?.id === server.ownerId || user?.role === 'ADMIN')) && member.user.id !== server.ownerId && (
                         <>
                           <Button
                             size="icon"

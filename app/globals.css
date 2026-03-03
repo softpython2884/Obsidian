@@ -61,15 +61,23 @@
   
   .bg-glass {
     background-color: var(--background-shading);
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(8px);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
   }
   
   .bg-card-glass {
     background-color: var(--card-shading);
+    backdrop-filter: blur(4px);
   }
   
   .bg-popout-glass {
     background-color: var(--popout-shading);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .bg-input-glass {
+    background-color: var(--input-shading);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 }

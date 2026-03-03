@@ -149,7 +149,10 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
       });
       if (response.ok) {
         const newMessage = await response.json();
-        socket?.emit('new_message', newMessage);
+        socket?.emit('send-message', {
+          channelId: channel.id,
+          message: newMessage
+        });
       }
     } catch (error) {
       console.error('Error sending embed:', error);
@@ -173,7 +176,10 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
       if (response.ok) {
         if (targetChannelId === channel.id) {
           const newMessage = await response.json();
-          socket?.emit('new_message', newMessage);
+          socket?.emit('send-message', {
+            channelId: channel.id,
+            message: newMessage
+          });
         } else {
           alert('Message forwarded!');
         }
@@ -197,7 +203,10 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
       });
       if (response.ok) {
         const newMessage = await response.json();
-        socket?.emit('new_message', newMessage);
+        socket?.emit('send-message', {
+          channelId: channel.id,
+          message: newMessage
+        });
       }
     } catch (error) {
       console.error('Error sending GIF:', error);
@@ -374,9 +383,9 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
   const channelName = getChannelName();
 
   return (
-    <div className="flex flex-1 flex-col bg-[#313338] h-full overflow-hidden relative font-sans">
+    <div className="flex flex-1 flex-col bg-transparent h-full overflow-hidden relative font-sans">
       {/* Chat Header - Clean & Minimal */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-black/20 px-6 bg-[#313338] z-10">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-black/20 px-6 bg-black/10 backdrop-blur-md z-10">
         <div className="flex items-center space-x-3">
           {channel.type === 'DM' ? (
             <div className="h-8 w-8 rounded-full bg-[#5865F2]/10 flex items-center justify-center text-[#5865F2]">
@@ -432,8 +441,8 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
               <ContextMenuTrigger>
                 <div
                   className={cn(
-                    "group flex items-start space-x-4 relative transition-colors duration-200 rounded-lg -mx-4 px-4 py-2 hover:bg-white/[0.02]",
-                    isCompact ? "mt-0.5" : "mt-6"
+                    "group flex items-start space-x-4 relative transition-colors duration-200 rounded-lg -mx-4 px-4 py-1 hover:bg-white/[0.02]",
+                    isCompact ? "mt-0" : "mt-2"
                   )}
                 >
                   {!isCompact ? (
@@ -611,7 +620,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
       </div>
 
       {/* Input Area - Floating & Clean */}
-      <div className="shrink-0 px-6 pb-6 pt-2 bg-[#313338]">
+      <div className="shrink-0 px-6 pb-6 pt-2 bg-transparent">
         <div className="mb-2 h-4 text-[10px] text-white/30 px-2 font-mono flex justify-between">
           <span>
             {typingUsers.length > 0 && (

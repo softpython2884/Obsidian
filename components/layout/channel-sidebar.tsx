@@ -39,7 +39,7 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
   }
 
   return (
-    <div className="flex w-64 flex-col bg-[#2B2D31] h-full font-sans">
+    <div className="flex w-64 flex-col bg-glass h-full font-sans">
       {/* Server Header */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -124,8 +124,8 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
       </div>
 
       {/* User Footer - Minimal */}
-      <div className="bg-[#232428] px-3 py-3">
-        <div className="flex items-center justify-between bg-[#232428] rounded-xl p-0.5">
+      <div className="bg-transparent px-3 py-3 border-t border-white/5">
+        <div className="flex items-center justify-between bg-black/20 rounded-xl p-0.5">
           <div
             className="flex flex-1 cursor-pointer items-center rounded-lg px-1 py-1 hover:bg-white/5 transition-colors"
             onClick={onOpenSettings}
