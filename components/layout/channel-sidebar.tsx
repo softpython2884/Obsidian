@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus, LogOut, Trash2 } from 'lucide-react';
+import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus, LogOut, Trash2, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
@@ -25,64 +25,66 @@ interface ChannelSidebarProps {
 
 export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenSettings, onOpenServerSettings, onLeaveServer }: ChannelSidebarProps) => {
   const { user } = useAuth();
+  const [isMicMuted, setIsMicMuted] = React.useState(false);
+  const [isDeafened, setIsDeafened] = React.useState(false);
 
   if (!server) {
     return (
-      <div className="flex w-60 flex-col bg-black/60 backdrop-blur-sm">
-        <div className="flex h-12 items-center border-b border-white/10 px-4 shadow-sm">
-          <div className="h-4 w-32 animate-pulse rounded bg-white/10" />
+      <div className="flex w-64 flex-col bg-[#0a0a0a] border-r border-white/5 h-full">
+        <div className="flex h-14 items-center border-b border-white/5 px-4">
+          <div className="h-4 w-32 animate-pulse rounded bg-white/5" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex w-60 flex-col bg-black/60 backdrop-blur-sm">
+    <div className="flex w-64 flex-col bg-[#0a0a0a] border-r border-white/5 h-full font-sans">
       {/* Server Header */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="flex h-12 cursor-pointer items-center justify-between border-b border-white/10 px-4 shadow-sm transition-colors hover:bg-white/5">
-            <h1 className="truncate font-bold text-white">{server.name}</h1>
-            <ChevronDown size={20} className="text-[#B5BAC1]" />
+          <div className="flex h-14 cursor-pointer items-center justify-between border-b border-white/5 px-4 transition-colors hover:bg-white/[0.02]">
+            <h1 className="truncate font-semibold text-white text-sm tracking-wide">{server.name}</h1>
+            <ChevronDown size={16} className="text-white/40" />
           </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 bg-[#111214] text-[#B5BAC1] border-[#1E1F22]">
-          <DropdownMenuLabel className="text-xs font-bold uppercase text-[#949BA4] px-2 py-1.5">
+        <DropdownMenuContent className="w-56 bg-[#111] text-white/80 border-white/10 shadow-xl rounded-xl p-1">
+          <DropdownMenuLabel className="text-[10px] font-bold uppercase text-white/40 px-2 py-1.5 tracking-wider">
             {server.name}
           </DropdownMenuLabel>
-          <DropdownMenuSeparator className="bg-[#1E1F22]" />
+          <DropdownMenuSeparator className="bg-white/5" />
           
           {server.inviteCode && (
             <DropdownMenuItem 
-              className="cursor-pointer text-[#949BA4] focus:bg-[#5865F2] focus:text-white"
+              className="cursor-pointer text-emerald-500 focus:bg-emerald-500/10 focus:text-emerald-500 rounded-lg text-xs font-medium"
               onClick={() => {
                 navigator.clipboard.writeText(server.inviteCode);
                 toast.success(`Invite code copied: ${server.inviteCode}`);
               }}
             >
-              <UserPlus className="mr-2 h-4 w-4" />
+              <UserPlus className="mr-2 h-3.5 w-3.5" />
               <span>Invite People</span>
             </DropdownMenuItem>
           )}
 
           {(server.ownerId === user?.id) && (
              <DropdownMenuItem 
-                className="cursor-pointer text-[#949BA4] focus:bg-[#5865F2] focus:text-white"
+                className="cursor-pointer text-white/80 focus:bg-white/5 focus:text-white rounded-lg text-xs font-medium"
                 onClick={onOpenServerSettings}
              >
-               <Settings className="mr-2 h-4 w-4" />
+               <Settings className="mr-2 h-3.5 w-3.5" />
                <span>Server Settings</span>
              </DropdownMenuItem>
           )}
 
-          <DropdownMenuSeparator className="bg-[#1E1F22]" />
+          <DropdownMenuSeparator className="bg-white/5" />
 
           {server.ownerId !== user?.id && (
             <DropdownMenuItem 
-              className="cursor-pointer text-[#F23F43] focus:bg-[#F23F43] focus:text-white"
+              className="cursor-pointer text-red-500 focus:bg-red-500/10 focus:text-red-500 rounded-lg text-xs font-medium"
               onClick={onLeaveServer}
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="mr-2 h-3.5 w-3.5" />
               <span>Leave Server</span>
             </DropdownMenuItem>
           )}
@@ -90,29 +92,29 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
       </DropdownMenu>
 
       {/* Channel List */}
-      <div className="flex-1 overflow-y-auto px-2 py-4 no-scrollbar">
+      <div className="flex-1 overflow-y-auto px-2 py-4 no-scrollbar space-y-6">
         {server.categories?.map((category: any) => (
-          <div key={category.id} className="mb-4">
-            <div className="mb-1 flex items-center px-1 text-xs font-bold uppercase text-[#949BA4]">
-              <ChevronDown size={12} className="mr-1" />
+          <div key={category.id} className="mb-2">
+            <div className="mb-1 flex items-center px-2 text-[10px] font-bold uppercase text-white/30 tracking-wider hover:text-white/50 transition-colors cursor-default">
+              <ChevronDown size={10} className="mr-1" />
               {category.name}
             </div>
-            <div className="space-y-[2px]">
+            <div className="space-y-[1px]">
               {category.channels?.map((channel: any) => (
                 <div
                   key={channel.id}
                   onClick={() => onSelectChannel(channel)}
                   className={cn(
-                    "group flex cursor-pointer items-center rounded px-2 py-1 transition-colors",
+                    "group flex cursor-pointer items-center rounded-lg px-2 py-1.5 transition-all duration-200",
                     activeChannel?.id === channel.id 
-                      ? "bg-white/20 text-white" 
-                      : "text-[#949BA4] hover:bg-white/10 hover:text-[#DBDEE1]"
+                      ? "bg-white/10 text-white" 
+                      : "text-white/40 hover:bg-white/5 hover:text-white/80"
                   )}
                 >
-                  <Hash size={20} className="mr-1.5 text-[#80848E]" />
-                  <span className="truncate font-medium">{channel.name}</span>
+                  <Hash size={16} className={cn("mr-2", activeChannel?.id === channel.id ? "text-white/60" : "text-white/20 group-hover:text-white/40")} />
+                  <span className={cn("truncate text-sm font-medium", activeChannel?.id === channel.id ? "text-white" : "text-white/60 group-hover:text-white/90")}>{channel.name}</span>
                   {activeChannel?.id !== channel.id && (
-                    <Settings size={14} className="ml-auto hidden text-[#B5BAC1] group-hover:block hover:text-[#DBDEE1]" />
+                    <Settings size={12} className="ml-auto hidden text-white/20 group-hover:block hover:text-white" />
                   )}
                 </div>
               ))}
@@ -121,42 +123,50 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
         ))}
       </div>
 
-      {/* User Footer */}
-      <div className="flex h-[52px] items-center bg-black/40 px-2 border-t border-white/5">
-        <div 
-          className="flex flex-1 cursor-pointer items-center rounded px-1 py-1 hover:bg-white/10"
-          onClick={onOpenSettings}
-        >
-          <div className="relative h-8 w-8 overflow-hidden rounded-full bg-[#5865F2]">
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.pseudo} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white">
-                {user?.pseudo?.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className={cn(
-              "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#232428]",
-              user?.state === 'ONLINE' ? "bg-[#23A559]" : 
-              user?.state === 'IDLE' ? "bg-[#F0B232]" : 
-              user?.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
-            )} />
-          </div>
-          <div className="ml-2 flex flex-col overflow-hidden">
-            <span className="truncate text-sm font-bold text-white leading-tight">{user?.pseudo}</span>
-            <span className="truncate text-[10px] text-[#B5BAC1] leading-tight">#{user?.id.slice(0, 4)}</span>
-          </div>
-        </div>
-        <div className="flex items-center space-x-1">
-          {user?.role === 'ADMIN' && (
+      {/* User Footer - Minimal */}
+      <div className="bg-[#050505] px-3 py-3 border-t border-white/5">
+        <div className="flex items-center justify-between bg-[#111] rounded-xl p-1.5 border border-white/5">
             <div 
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded text-[#F04747] hover:bg-[#3F4147] hover:text-[#F04747]"
-              onClick={() => window.location.href = '/admin'}
-              title="Admin Dashboard"
+            className="flex flex-1 cursor-pointer items-center rounded-lg px-1 py-1 hover:bg-white/5 transition-colors"
+            onClick={onOpenSettings}
             >
-              <Shield size={20} />
+            <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 shadow-inner">
+                {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.pseudo} className="h-full w-full object-cover" />
+                ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white">
+                    {user?.pseudo?.charAt(0).toUpperCase()}
+                </div>
+                )}
+                <div className={cn(
+                "absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#111]",
+                user?.state === 'ONLINE' ? "bg-emerald-500" : 
+                user?.state === 'IDLE' ? "bg-amber-500" : 
+                user?.state === 'DND' ? "bg-red-500" : "bg-white/20"
+                )} />
             </div>
-          )}
+            <div className="ml-2.5 flex flex-col overflow-hidden">
+                <span className="truncate text-xs font-semibold text-white leading-tight">{user?.pseudo}</span>
+                <span className="truncate text-[10px] text-white/30 leading-tight font-mono">#{user?.id.slice(0, 4)}</span>
+            </div>
+            </div>
+            <div className="flex items-center space-x-0.5 ml-1">
+                <div 
+                  className={cn("p-1.5 rounded-lg cursor-pointer transition-colors", isMicMuted ? "text-red-500 bg-red-500/10 hover:bg-red-500/20" : "text-white/40 hover:bg-white/10 hover:text-white")}
+                  onClick={() => setIsMicMuted(!isMicMuted)}
+                >
+                    <Mic size={14} className={cn(isMicMuted && "fill-current")} />
+                </div>
+                <div 
+                  className={cn("p-1.5 rounded-lg cursor-pointer transition-colors", isDeafened ? "text-red-500 bg-red-500/10 hover:bg-red-500/20" : "text-white/40 hover:bg-white/10 hover:text-white")}
+                  onClick={() => setIsDeafened(!isDeafened)}
+                >
+                    <Headphones size={14} className={cn(isDeafened && "fill-current")} />
+                </div>
+                <div className="p-1.5 rounded-lg hover:bg-white/10 cursor-pointer text-white/40 hover:text-white transition-colors" onClick={onOpenSettings}>
+                    <Settings2 size={14} />
+                </div>
+            </div>
         </div>
       </div>
     </div>

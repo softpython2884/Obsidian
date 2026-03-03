@@ -16,8 +16,15 @@ export const ForwardMessageModal = ({ isOpen, onClose, onForward, currentServerI
   const { user } = useAuth();
   const [servers, setServers] = useState<any[]>([]);
   const [selectedServerId, setSelectedServerId] = useState<string>('');
-  const [channels, setChannels] = useState<any[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string>('');
+
+  const channels = React.useMemo(() => {
+    if (!selectedServerId || servers.length === 0) return [];
+    const server = servers.find(s => s.id === selectedServerId);
+    if (!server) return [];
+    const allChannels = server.categories?.flatMap((c: any) => c.channels) || [];
+    return allChannels.filter((c: any) => c.type === 'TEXT');
+  }, [selectedServerId, servers]);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -26,27 +33,42 @@ export const ForwardMessageModal = ({ isOpen, onClose, onForward, currentServerI
         .then(res => res.json())
         .then(data => {
             setServers(data);
+            let initialServerId = '';
             if (currentServerId) {
-                setSelectedServerId(currentServerId);
+                initialServerId = currentServerId;
             } else if (data.length > 0) {
-                setSelectedServerId(data[0].id);
+                initialServerId = data[0].id;
+            }
+            
+            if (initialServerId) {
+                setSelectedServerId(initialServerId);
+                const server = data.find((s: any) => s.id === initialServerId);
+                if (server) {
+                    const allChannels = server.categories?.flatMap((c: any) => c.channels) || [];
+                    const textChannels = allChannels.filter((c: any) => c.type === 'TEXT');
+                    if (textChannels.length > 0) {
+                        setSelectedChannelId(textChannels[0].id);
+                    }
+                }
             }
         })
         .catch(err => console.error("Failed to fetch servers", err));
     }
   }, [isOpen, currentServerId, user]);
 
-  useEffect(() => {
-    if (selectedServerId && servers.length > 0) {
-      const server = servers.find(s => s.id === selectedServerId);
+  const handleServerChange = (serverId: string) => {
+      setSelectedServerId(serverId);
+      const server = servers.find(s => s.id === serverId);
       if (server) {
-        // Flatten channels from categories
-        const allChannels = server.categories?.flatMap((c: any) => c.channels) || [];
-        setChannels(allChannels.filter((c: any) => c.type === 'TEXT'));
-        if (allChannels.length > 0) setSelectedChannelId(allChannels[0].id);
+          const allChannels = server.categories?.flatMap((c: any) => c.channels) || [];
+          const textChannels = allChannels.filter((c: any) => c.type === 'TEXT');
+          if (textChannels.length > 0) {
+              setSelectedChannelId(textChannels[0].id);
+          } else {
+              setSelectedChannelId('');
+          }
       }
-    }
-  }, [selectedServerId, servers]);
+  };
 
   const handleForward = () => {
     if (selectedChannelId) {
@@ -64,7 +86,7 @@ export const ForwardMessageModal = ({ isOpen, onClose, onForward, currentServerI
         <div className="space-y-4">
           <div>
             <Label className="text-xs font-bold text-[#B5BAC1] uppercase">Select Server</Label>
-            <Select onValueChange={setSelectedServerId} value={selectedServerId}>
+            <Select onValueChange={handleServerChange} value={selectedServerId}>
               <SelectTrigger className="w-full bg-[#1E1F22] border-none text-[#DBDEE1] mt-1">
                 <SelectValue placeholder="Select a server" />
               </SelectTrigger>

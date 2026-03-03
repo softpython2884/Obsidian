@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Hash, PlusCircle, Gift, Sticker, Smile, Send, Shield, Pencil, Trash2, X, Check, Image as ImageIcon, CornerUpRight } from 'lucide-react';
+import { Hash, Plus, Gift, Smile, Send, Shield, Pencil, Trash2, X, Check, Image as ImageIcon, CornerUpRight, MoreHorizontal, Reply } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { decrypt } from '@/lib/encryption';
@@ -21,10 +21,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { GifPicker } from '@/components/pickers/gif-picker';
 import { EmbedCreatorModal } from '@/components/modals/embed-creator-modal';
 import { ForwardMessageModal } from '@/components/modals/forward-message-modal';
+import { processCommand } from '@/lib/commands'; // Import command processor
 
 interface ChatAreaProps {
   channel: any;
@@ -51,6 +58,8 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // ... (keep existing scroll logic and useEffects for fetching messages/socket)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -116,7 +125,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
         socket.off('user-typing');
       };
     }
-  }, [socket]);
+  }, [socket, isNearBottom]);
 
   useEffect(() => {
     // Scroll to bottom on initial load
@@ -157,11 +166,10 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
           content: messageToForward.content,
           channelId: targetChannelId,
           isForwarded: true,
-          forwardedFrom: messageToForward.id, // Or link: `${window.location.origin}/channels/${server?.id}/${channel.id}/${messageToForward.id}`
+          forwardedFrom: messageToForward.id,
         }),
       });
       if (response.ok) {
-        // If forwarding to current channel, emit socket event
         if (targetChannelId === channel.id) {
             const newMessage = await response.json();
             socket?.emit('new_message', newMessage);
@@ -204,21 +212,61 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
 
     // Handle commands
     if (content.startsWith('/')) {
-      if (content === '/clear') {
-        setMessages([]);
-        return;
+      const result = await processCommand(content, { setMessages });
+      if (result) {
+        if (typeof result === 'string') {
+           // Send the result as a message from the user (or system depending on implementation)
+           // For now, let's treat command output as a message sent by the user unless it's system
+           // Actually, better to just send the result as the message content if it's a string
+           // But wait, if it's /roll, the user wants to send the result to everyone.
+           // If it's /help, only the user sees it.
+           
+           // Let's modify processCommand to return what to do.
+           // For simplicity, let's assume string returns are messages to be sent to channel.
+           // If it returns an object { type: 'system', content: ... }, it's local only.
+           
+           // Re-evaluating: The command processor returns a string or object.
+           // If string, send it as a message.
+           // If object with type 'system', add to local messages.
+           
+           // However, the current implementation of processCommand returns a string for /roll.
+           // So we send that string.
+           
+           const response = await fetch('/api/messages', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                content: result,
+                userId: user.id,
+                channelId: channel.id,
+              }),
+            });
+            const newMessage = await response.json();
+            if (socket) {
+              socket.emit('send-message', {
+                channelId: channel.id,
+                message: newMessage
+              });
+            }
+            return;
+        } else if (typeof result === 'object' && result.type === 'system') {
+            // Local system message
+             const systemMsg = {
+              id: 'system-' + Date.now(),
+              content: result.content,
+              user: { pseudo: 'System', role: 'ADMIN', avatarUrl: null },
+              createdAt: new Date(),
+              isSystem: true
+            };
+            setMessages((prev) => [...prev, systemMsg]);
+            return;
+        }
       }
-      if (content === '/help') {
-        const helpMsg = {
-          id: 'help-' + Date.now(),
-          content: 'Available commands: /help, /nick [name], /clear',
-          user: { pseudo: 'System', role: 'ADMIN' },
-          createdAt: new Date(),
-          isSystem: true
-        };
-        setMessages((prev) => [...prev, helpMsg]);
-        return;
-      }
+      // If command not found or returns null, proceed as normal message? 
+      // Or maybe show error? For now, let's just send it as text if not processed.
+      // But wait, if I type /unknown, processCommand returns null.
+      // I should probably just send it as text if it's not a known command, or show error.
+      // Let's just send it as text for now to avoid blocking.
     }
 
     const response = await fetch('/api/messages', {
@@ -303,8 +351,13 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
 
   if (!channel) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-        <h2 className="text-xl font-bold text-[#949BA4]">Select a channel to start chatting</h2>
+      <div className="flex flex-1 flex-col items-center justify-center bg-[#0a0a0a]">
+        <div className="text-center space-y-4">
+            <div className="h-24 w-24 rounded-2xl bg-[#1a1a1a] flex items-center justify-center mx-auto mb-4">
+                <Hash className="h-12 w-12 text-white/20" />
+            </div>
+            <h2 className="text-xl font-medium text-white/60">Select a channel to start chatting</h2>
+        </div>
       </div>
     );
   }
@@ -320,42 +373,48 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
   const channelName = getChannelName();
 
   return (
-    <div className="flex flex-1 flex-col bg-black/40 backdrop-blur-sm h-full overflow-hidden relative">
-      {/* Chat Header */}
-      <div className="flex h-12 shrink-0 items-center border-b border-white/10 px-4 shadow-sm bg-black/20">
-        {channel.type === 'DM' ? (
-          <div className="mr-2 h-6 w-6 rounded-full bg-[#5865F2] flex items-center justify-center text-[10px] font-bold text-white">
-            @
-          </div>
-        ) : (
-          <Hash size={24} className="mr-2 text-[#80848E]" />
-        )}
-        <h3 className="font-bold text-white">{channelName}</h3>
+    <div className="flex flex-1 flex-col bg-[#0a0a0a] h-full overflow-hidden relative font-sans">
+      {/* Chat Header - Clean & Minimal */}
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/5 px-6 bg-[#0a0a0a]/80 backdrop-blur-md z-10">
+        <div className="flex items-center space-x-3">
+            {channel.type === 'DM' ? (
+            <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                <span className="text-sm font-bold">@</span>
+            </div>
+            ) : (
+            <Hash size={20} className="text-white/40" />
+            )}
+            <div className="flex flex-col">
+                <h3 className="font-semibold text-white text-sm tracking-wide">{channelName}</h3>
+                {channel.description && <span className="text-xs text-white/40">{channel.description}</span>}
+            </div>
+        </div>
+        {/* Header Actions could go here */}
       </div>
 
-      {/* Messages Area */}
+      {/* Messages Area - Spacious & Modern */}
       <div 
-        className="flex-1 overflow-y-auto p-4 space-y-1 no-scrollbar relative"
+        className="flex-1 overflow-y-auto px-6 py-4 space-y-6 no-scrollbar relative"
         ref={scrollAreaRef}
         onScroll={handleScroll}
       >
-        <div className="mb-8 mt-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#41434A] text-white">
+        <div className="mb-12 mt-8 text-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#1a1a1a] text-white mb-6 shadow-2xl shadow-black/50">
             {channel.type === 'DM' ? (
               <img 
                 src={channel.members?.find((m: any) => m.id !== user?.id)?.avatarUrl || 'https://github.com/shadcn.png'} 
                 alt={channelName}
-                className="h-full w-full rounded-full object-cover"
+                className="h-full w-full rounded-3xl object-cover"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }} 
               />
             ) : (
-              <Hash size={40} />
+              <Hash size={40} className="text-white/20" />
             )}
           </div>
-          <h1 className="mt-4 text-3xl font-bold text-white">
-            {channel.type === 'DM' ? channelName : `Welcome to #${channelName}!`}
+          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
+            {channel.type === 'DM' ? channelName : `Welcome to #${channelName}`}
           </h1>
-          <p className="text-[#B5BAC1]">
+          <p className="text-white/40 max-w-md mx-auto text-sm">
             {channel.type === 'DM' 
               ? `This is the beginning of your direct message history with ${channelName}.`
               : `This is the start of the #${channelName} channel.`}
@@ -365,165 +424,209 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
         {messages.map((msg, index) => {
           const isCompact = index > 0 && 
             messages[index - 1].user.id === msg.user.id && 
-            (new Date(msg.createdAt).getTime() - new Date(messages[index - 1].createdAt).getTime()) < 60000;
+            (new Date(msg.createdAt).getTime() - new Date(messages[index - 1].createdAt).getTime()) < 300000; // 5 mins grouping
 
           return (
             <ContextMenu key={msg.id}>
               <ContextMenuTrigger>
                 <div 
                   className={cn(
-                    "group flex items-start space-x-4 px-4 hover:bg-white/5 pr-4",
-                    isCompact ? "py-0.5" : "py-1 mt-4"
+                    "group flex items-start space-x-4 relative transition-colors duration-200 rounded-lg -mx-4 px-4 py-2 hover:bg-white/[0.02]",
+                    isCompact ? "mt-0.5" : "mt-6"
                   )}
                 >
-              {!isCompact ? (
-                <div 
-                  className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#5865F2] mt-0.5 cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => onViewProfile(msg.user)}
-                >
-                  {msg.user?.avatarUrl ? (
-                    <img src={msg.user.avatarUrl} alt={msg.user.pseudo} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm font-bold text-white">
-                      {msg.user?.pseudo?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="w-10 shrink-0 text-[10px] text-[#949BA4] opacity-0 group-hover:opacity-100 text-right self-center select-none">
-                  {format(new Date(msg.createdAt), 'HH:mm')}
-                </div>
-              )}
-
-              <div className="flex flex-col min-w-0 w-full relative">
-                {!isCompact && (
-                  <div className="flex items-center space-x-2">
-                    <span 
-                      className="font-bold text-white hover:underline cursor-pointer flex items-center" 
-                      style={{ color: msg.user?.role === 'ADMIN' ? '#F04747' : msg.user?.role === 'MODERATOR' ? '#FAA61A' : '#DBDEE1' }}
+                  {!isCompact ? (
+                    <div 
+                      className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#1a1a1a] cursor-pointer hover:ring-2 hover:ring-white/10 transition-all"
                       onClick={() => onViewProfile(msg.user)}
                     >
-                      {msg.user?.pseudo}
-                      {msg.user?.role === 'ADMIN' && <Shield size={14} className="ml-1 text-[#F04747]" />}
-                    </span>
-                    <span className="text-xs text-[#949BA4]">{format(new Date(msg.createdAt), 'HH:mm')}</span>
-                  </div>
-                )}
-                
-                {editingMessageId === msg.id ? (
-                  <div className="mt-1">
-                    <input
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveEdit(msg.id);
-                        if (e.key === 'Escape') handleCancelEdit();
-                      }}
-                      className="w-full bg-[#383A40] text-white rounded p-2 outline-none border border-blue-500"
-                      autoFocus
-                    />
-                    <div className="text-xs text-[#949BA4] mt-1">
-                      escape to cancel • enter to save
+                      {msg.user?.avatarUrl ? (
+                        <img src={msg.user.avatarUrl} alt={msg.user.pseudo} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm font-bold text-white/60 bg-gradient-to-br from-white/5 to-white/10">
+                          {msg.user?.pseudo?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ) : (
-                  <div className={cn("text-[#DBDEE1] break-words markdown-content", isCompact && "leading-[1.375rem]")}>
-                    {msg.isForwarded && (
-                      <div className="flex items-center text-xs text-[#949BA4] mb-1 italic">
-                        <CornerUpRight size={12} className="mr-1" />
-                        Forwarded message
-                        {msg.forwardedFrom && (
-                          <span className="ml-1 text-[#00AFF4] cursor-pointer hover:underline" onClick={() => alert(`Original Message ID: ${msg.forwardedFrom}`)}>
-                            (View Original)
-                          </span>
-                        )}
+                  ) : (
+                    <div className="w-10 shrink-0 text-[10px] text-white/20 opacity-0 group-hover:opacity-100 text-right self-center select-none font-mono">
+                      {format(new Date(msg.createdAt), 'HH:mm')}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col min-w-0 w-full relative">
+                    {!isCompact && (
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span 
+                          className="font-medium text-white text-sm hover:underline cursor-pointer flex items-center" 
+                          style={{ color: msg.user?.role === 'ADMIN' ? '#ef4444' : msg.user?.role === 'MODERATOR' ? '#f59e0b' : undefined }}
+                          onClick={() => onViewProfile(msg.user)}
+                        >
+                          {msg.user?.pseudo}
+                          {msg.user?.role === 'ADMIN' && <Shield size={12} className="ml-1 text-red-500" />}
+                        </span>
+                        <span className="text-[10px] text-white/30 font-mono">{format(new Date(msg.createdAt), 'HH:mm')}</span>
                       </div>
                     )}
                     
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    {msg.updatedAt !== msg.createdAt && <span className="text-[10px] text-[#949BA4] ml-1">(edited)</span>}
-                    
-                    {msg.isEmbed && msg.embedData && (() => {
-                      try {
-                        const embed = JSON.parse(msg.embedData);
-                        return (
-                          <div className="mt-2 rounded bg-[#2B2D31] border-l-4 p-4 max-w-md grid gap-1" style={{ borderLeftColor: embed.color || '#5865F2' }}>
-                            {embed.title && <h4 className="font-bold text-white">{embed.title}</h4>}
-                            {embed.description && <div className="text-sm text-[#DBDEE1] whitespace-pre-wrap"><ReactMarkdown>{embed.description}</ReactMarkdown></div>}
-                            {embed.image?.url && <img src={embed.image.url} alt="Embed" className="mt-2 rounded max-h-60 object-cover w-full" />}
-                            {embed.footer?.text && <div className="text-xs text-[#949BA4] mt-1">{embed.footer.text}</div>}
+                    {editingMessageId === msg.id ? (
+                      <div className="mt-1 bg-[#1a1a1a] p-2 rounded-lg border border-white/10">
+                        <input
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveEdit(msg.id);
+                            if (e.key === 'Escape') handleCancelEdit();
+                          }}
+                          className="w-full bg-transparent text-white text-sm outline-none placeholder:text-white/20"
+                          autoFocus
+                          placeholder="Edit your message..."
+                        />
+                        <div className="text-[10px] text-white/40 mt-2 flex justify-end space-x-2">
+                            <span className="cursor-pointer hover:text-white" onClick={handleCancelEdit}>Cancel</span>
+                            <span className="cursor-pointer text-emerald-500 hover:text-emerald-400" onClick={() => handleSaveEdit(msg.id)}>Save</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={cn("text-white/90 text-[15px] leading-relaxed break-words markdown-content font-light tracking-wide", isCompact && "leading-relaxed")}>
+                        {msg.isForwarded && (
+                          <div className="flex items-center text-xs text-white/40 mb-2 pl-2 border-l-2 border-white/10 italic">
+                            <CornerUpRight size={12} className="mr-2" />
+                            Forwarded message
                           </div>
-                        );
-                      } catch (e) {
-                        return null;
-                      }
-                    })()}
-                  </div>
-                )}
+                        )}
+                        
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        {msg.updatedAt !== msg.createdAt && <span className="text-[10px] text-white/30 ml-1 select-none">(edited)</span>}
+                        
+                        {msg.isEmbed && msg.embedData && (() => {
+                          try {
+                            const embed = JSON.parse(msg.embedData);
+                            return (
+                              <div className="mt-3 rounded-xl bg-[#111] border border-white/5 overflow-hidden max-w-md shadow-lg">
+                                <div className="h-1 w-full" style={{ backgroundColor: embed.color || '#5865F2' }} />
+                                <div className="p-4">
+                                    {embed.title && <h4 className="font-bold text-white mb-2">{embed.title}</h4>}
+                                    {embed.description && <div className="text-sm text-white/70 whitespace-pre-wrap leading-relaxed"><ReactMarkdown>{embed.description}</ReactMarkdown></div>}
+                                    {embed.image?.url && <img src={embed.image.url} alt="Embed" className="mt-3 rounded-lg max-h-60 object-cover w-full" />}
+                                    {embed.footer?.text && <div className="text-[10px] text-white/30 mt-3 pt-3 border-t border-white/5">{embed.footer.text}</div>}
+                                </div>
+                              </div>
+                            );
+                          } catch (e) {
+                            return null;
+                          }
+                        })()}
+                      </div>
+                    )}
 
-                {msg.gifUrl && (
-                  <img src={msg.gifUrl} alt="GIF" className="mt-2 max-w-xs rounded-lg" />
-                )}
-                
-                {/* Message Actions */}
-                <div className="absolute right-0 -top-2 bg-[#313338] border border-[#2B2D31] rounded shadow-sm p-1 hidden group-hover:flex items-center space-x-1 z-10">
-                  <div 
-                    className="p-1 hover:bg-[#404249] rounded cursor-pointer text-[#B5BAC1] hover:text-[#DBDEE1]"
-                    title="Add Reaction"
-                    onClick={() => alert('Reactions coming soon!')}
-                  >
-                    <Smile size={16} />
+                    {msg.gifUrl && (
+                      <img src={msg.gifUrl} alt="GIF" className="mt-2 max-w-xs rounded-xl shadow-lg border border-white/5" />
+                    )}
+                    
+                    {/* Message Actions - Floating & Minimal */}
+                    <div className="absolute right-0 -top-4 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl p-1 hidden group-hover:flex items-center space-x-0.5 z-20 backdrop-blur-md">
+                      {/* Reactions hidden until implemented
+                      <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div 
+                                    className="p-1.5 hover:bg-white/10 rounded-md cursor-pointer text-white/60 hover:text-white transition-colors"
+                                    onClick={() => alert('Reactions coming soon!')}
+                                >
+                                    <Smile size={14} />
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="bg-black text-xs">Add Reaction</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      */}
+
+                      <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div 
+                                    className="p-1.5 hover:bg-white/10 rounded-md cursor-pointer text-white/60 hover:text-white transition-colors"
+                                    onClick={() => {
+                                        setMessageToForward(msg);
+                                        setIsForwardModalOpen(true);
+                                    }}
+                                >
+                                    <CornerUpRight size={14} />
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="bg-black text-xs">Forward</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+
+                      {(user?.id === msg.user.id || user?.role === 'ADMIN') && (
+                        <>
+                          <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div 
+                                        className="p-1.5 hover:bg-white/10 rounded-md cursor-pointer text-white/60 hover:text-white transition-colors"
+                                        onClick={() => handleEditMessage(msg)}
+                                    >
+                                        <Pencil size={14} />
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="bg-black text-xs">Edit</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div 
+                                        className="p-1.5 hover:bg-red-500/10 rounded-md cursor-pointer text-white/60 hover:text-red-500 transition-colors"
+                                        onClick={() => handleDeleteMessage(msg.id)}
+                                    >
+                                        <Trash2 size={14} />
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="bg-black text-xs">Delete</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  {(user?.id === msg.user.id || user?.role === 'ADMIN') && (
-                    <>
-                      <div 
-                        className="p-1 hover:bg-[#404249] rounded cursor-pointer text-[#B5BAC1] hover:text-[#DBDEE1]"
-                        title="Edit"
-                        onClick={() => handleEditMessage(msg)}
-                      >
-                        <Pencil size={16} />
-                      </div>
-                      <div 
-                        className="p-1 hover:bg-[#404249] rounded cursor-pointer text-[#F23F43] hover:text-[#F23F43]"
-                        title="Delete"
-                        onClick={() => handleDeleteMessage(msg.id)}
-                      >
-                        <Trash2 size={16} />
-                      </div>
-                    </>
-                  )}
                 </div>
-              </div>
-            </div>
               </ContextMenuTrigger>
-              <ContextMenuContent className="bg-[#111214] border-[#1E1F22] text-[#DBDEE1]">
-                <ContextMenuItem onClick={() => alert('Add Reaction - Coming soon!')}>
-                  Add Reaction
+              <ContextMenuContent className="bg-[#111] border-[#222] text-white/80 w-56">
+                {/* 
+                <ContextMenuItem className="focus:bg-white/10 focus:text-white cursor-pointer" onClick={() => alert('Add Reaction - Coming soon!')}>
+                  <Smile className="mr-2 h-4 w-4" /> Add Reaction
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => handleEditMessage(msg)} disabled={user?.id !== msg.user.id}>
-                  Edit Message
+                */}
+                <ContextMenuItem className="focus:bg-white/10 focus:text-white cursor-pointer" onClick={() => handleEditMessage(msg)} disabled={user?.id !== msg.user.id}>
+                  <Pencil className="mr-2 h-4 w-4" /> Edit Message
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => alert('Reply - Coming soon!')}>
-                  Reply
+                {/*
+                <ContextMenuItem className="focus:bg-white/10 focus:text-white cursor-pointer" onClick={() => alert('Reply - Coming soon!')}>
+                  <Reply className="mr-2 h-4 w-4" /> Reply
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => navigator.clipboard.writeText(msg.content)}>
-                  Copy Text
+                */}
+                <ContextMenuItem className="focus:bg-white/10 focus:text-white cursor-pointer" onClick={() => navigator.clipboard.writeText(msg.content)}>
+                  <Check className="mr-2 h-4 w-4" /> Copy Text
                 </ContextMenuItem>
                 <ContextMenuItem 
+                  className="focus:bg-white/10 focus:text-white cursor-pointer"
                   onClick={() => {
                     setMessageToForward(msg);
                     setIsForwardModalOpen(true);
                   }}
                 >
-                  Forward Message
+                  <CornerUpRight className="mr-2 h-4 w-4" /> Forward Message
                 </ContextMenuItem>
-                <ContextMenuSeparator className="bg-[#1E1F22]" />
+                <ContextMenuSeparator className="bg-[#222]" />
                 <ContextMenuItem 
-                  className="text-[#F23F43] focus:text-[#F23F43]" 
+                  className="text-red-500 focus:bg-red-500/10 focus:text-red-500 cursor-pointer" 
                   onClick={() => handleDeleteMessage(msg.id)}
                   disabled={user?.id !== msg.user.id && user?.role !== 'ADMIN'}
                 >
-                  Delete Message
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete Message
                 </ContextMenuItem>
               </ContextMenuContent>
             </ContextMenu>
@@ -534,45 +637,62 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
         {/* New Messages Indicator */}
         {showNewMessages && (
           <div 
-            className="fixed bottom-24 right-8 bg-[#5865F2] text-white px-4 py-2 rounded-full cursor-pointer shadow-lg hover:bg-[#4752C4] transition-colors z-50 flex items-center animate-bounce"
+            className="fixed bottom-24 right-8 bg-emerald-500 text-white px-4 py-2 rounded-full cursor-pointer shadow-2xl shadow-emerald-500/20 hover:bg-emerald-600 transition-all z-50 flex items-center animate-in fade-in slide-in-from-bottom-4 duration-300"
             onClick={scrollToBottom}
           >
-            <span className="font-bold text-sm">New Messages</span>
+            <span className="font-medium text-sm">New Messages</span>
             <span className="ml-2 text-xs">↓</span>
           </div>
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="shrink-0 bg-black/40 backdrop-blur-md px-4 pb-4 pt-2 border-t border-white/5">
-        <div className="relative flex items-center rounded-lg bg-[#383A40]/50 px-4 py-2.5 border border-white/5">
-          <PlusCircle size={24} className="mr-4 shrink-0 cursor-pointer text-[#B5BAC1] hover:text-[#DBDEE1]" />
-          <input
-            value={inputValue}
-            onChange={handleTyping}
-            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder={`Message ${channel.type === 'DM' ? '@' + channelName : '#' + channelName}`}
-            className="flex-1 bg-transparent text-[#DBDEE1] outline-none placeholder:text-[#949BA4] min-w-0"
-          />
-          <div className="flex items-center space-x-3 text-[#B5BAC1] shrink-0 ml-2">
-            <Gift 
-              size={24} 
-              className="cursor-pointer hover:text-[#DBDEE1]" 
-              onClick={() => setIsEmbedModalOpen(true)}
+      {/* Input Area - Floating & Clean */}
+      <div className="shrink-0 px-6 pb-6 pt-2 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a] to-transparent">
+        <div className="relative flex items-end rounded-2xl bg-[#1a1a1a] p-2 border border-white/5 shadow-lg transition-all focus-within:border-white/10 focus-within:ring-1 focus-within:ring-white/5">
+          <div className="flex items-center pb-2 pl-2 space-x-2">
+             <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <button 
+                            className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+                            onClick={() => setIsEmbedModalOpen(true)}
+                        >
+                            <Plus size={20} />
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="bg-black text-xs">Add Embed</TooltipContent>
+                </Tooltip>
+             </TooltipProvider>
+          </div>
+
+          <div className="flex-1 min-w-0 py-2 px-2">
+            <input
+                value={inputValue}
+                onChange={handleTyping}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder={`Message #${channelName}`}
+                className="w-full bg-transparent text-white text-[15px] outline-none placeholder:text-white/20"
+                autoComplete="off"
             />
-            
+          </div>
+          
+          <div className="flex items-center pb-1 pr-1 space-x-1">
             <Popover>
               <PopoverTrigger asChild>
-                <ImageIcon size={24} className="cursor-pointer hover:text-[#DBDEE1]" />
+                <button className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors">
+                    <Gift size={20} />
+                </button>
               </PopoverTrigger>
-              <PopoverContent className="w-80 p-0 border-none bg-[#313338] shadow-lg" side="top" align="center">
+              <PopoverContent className="w-80 p-0 border-none bg-[#1a1a1a] shadow-2xl rounded-xl overflow-hidden" side="top" align="center">
                 <GifPicker onGifSelect={handleGifSelect} />
               </PopoverContent>
             </Popover>
             
             <Popover>
               <PopoverTrigger asChild>
-                <Smile size={24} className="cursor-pointer hover:text-[#DBDEE1]" />
+                <button className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors">
+                    <Smile size={20} />
+                </button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0 border-none bg-transparent shadow-none" side="top" align="end">
                 <EmojiPicker 
@@ -584,19 +704,29 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
               </PopoverContent>
             </Popover>
 
-            <Send 
-              size={24} 
-              className="cursor-pointer hover:text-[#DBDEE1]" 
-              onClick={handleSendMessage}
-            />
+            <button 
+                className={cn(
+                    "p-2 rounded-xl transition-all duration-200",
+                    inputValue.trim() ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600" : "text-white/20 cursor-not-allowed"
+                )}
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim()}
+            >
+                <Send size={18} />
+            </button>
           </div>
         </div>
-        <div className="mt-1 h-4 text-xs text-[#B5BAC1]">
-          {typingUsers.length > 0 && (
-            <span>
-              {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
-            </span>
-          )}
+        <div className="mt-2 h-4 text-[10px] text-white/30 px-2 font-mono flex justify-between">
+          <span>
+            {typingUsers.length > 0 && (
+                <span className="animate-pulse text-emerald-500">
+                {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
+                </span>
+            )}
+          </span>
+          <span className="opacity-50">
+            /help for commands
+          </span>
         </div>
       </div>
       <EmbedCreatorModal 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,16 +38,6 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
   // Members State
   const [members, setMembers] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (isOpen && server) {
-      setServerName(server.name);
-      setServerImage(server.imageUrl || "");
-      fetchRoles();
-      fetchChannels();
-      fetchMembers();
-    }
-  }, [isOpen, server]);
-
   const fetchRoles = async () => {
     try {
       const res = await fetch(`/api/servers/${server.id}/roles`);
@@ -77,6 +67,18 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
       console.error("Failed to fetch members", error);
     }
   };
+
+  const prevIsOpen = useRef(false);
+
+  useEffect(() => {
+    if (isOpen && server) {
+      setServerName(server.name);
+      setServerImage(server.imageUrl || "");
+      fetchRoles();
+      fetchChannels();
+      fetchMembers();
+    }
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSaveOverview = async () => {
     try {
