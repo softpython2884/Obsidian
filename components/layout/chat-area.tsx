@@ -250,10 +250,10 @@ export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#41434A] text-white">
             {channel.type === 'DM' ? (
               <img 
-                src={channel.members?.find((m: any) => m.id !== user?.id)?.avatarUrl || ''} 
+                src={channel.members?.find((m: any) => m.id !== user?.id)?.avatarUrl || 'https://github.com/shadcn.png'} 
                 alt={channelName}
                 className="h-full w-full rounded-full object-cover"
-                onError={(e) => { e.currentTarget.src = ''; e.currentTarget.style.display = 'none'; }} 
+                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
               />
             ) : (
               <Hash size={40} />
@@ -390,7 +390,7 @@ export const ChatArea = ({ channel, onViewProfile }: ChatAreaProps) => {
       </div>
 
       {/* Input Area */}
-      <div className="shrink-0 bg-black/40 backdrop-blur-md px-4 pb-6 pt-2 border-t border-white/5">
+      <div className="shrink-0 bg-black/40 backdrop-blur-md px-4 pb-4 pt-2 border-t border-white/5">
         <div className="relative flex items-center rounded-lg bg-[#383A40]/50 px-4 py-2.5 border border-white/5">
           <PlusCircle size={24} className="mr-4 shrink-0 cursor-pointer text-[#B5BAC1] hover:text-[#DBDEE1]" />
           <input

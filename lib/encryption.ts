@@ -1,6 +1,6 @@
 import CryptoJS from 'crypto-js';
 
-const MASTER_KEY = process.env.MASTER_ENCRYPTION_KEY || 'default-secret-key-32-chars-long-!!!';
+const MASTER_KEY = process.env.NEXT_PUBLIC_MASTER_ENCRYPTION_KEY || 'default-secret-key-32-chars-long-!!!';
 
 /**
  * Encrypts a string using AES-256 with the master key.

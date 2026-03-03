@@ -169,6 +169,7 @@ export const DiscordLayout = () => {
           <MemberList 
             server={activeServer} 
             onViewProfile={setSelectedUser}
+            onStartDM={handleStartDM}
           />
         </>
       ) : (

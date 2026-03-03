@@ -18,9 +18,10 @@ import { useAuth } from '@/components/providers/auth-provider';
 interface MemberListProps {
   server: any;
   onViewProfile: (user: any) => void;
+  onStartDM?: (userId: string) => void;
 }
 
-export const MemberList = ({ server, onViewProfile }: MemberListProps) => {
+export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps) => {
   const { user: currentUser } = useAuth();
   const [members, setMembers] = useState<any[]>([]);
 
@@ -84,7 +85,13 @@ export const MemberList = ({ server, onViewProfile }: MemberListProps) => {
         </ContextMenuItem>
         <ContextMenuItem 
           className="focus:bg-[#5865F2] focus:text-white cursor-pointer"
-          onClick={() => handleAction('Message', member)}
+          onClick={() => {
+            if (onStartDM) {
+              onStartDM(member.id);
+            } else {
+              handleAction('Message', member);
+            }
+          }}
         >
           <MessageSquare className="mr-2 h-4 w-4" />
           Message
@@ -98,7 +105,7 @@ export const MemberList = ({ server, onViewProfile }: MemberListProps) => {
                 <Shield className="mr-2 h-4 w-4" />
                 Roles
               </ContextMenuSubTrigger>
-              <ContextMenuSubContent className="bg-[#111214] border-[#1E1F22] text-[#DBDEE1]">
+              <ContextMenuSubContent className="bg-[#111214] border-[#1E1F22] text-[#DBDEE1] min-w-[12rem] ml-1">
                 <ContextMenuItem className="focus:bg-[#5865F2] focus:text-white cursor-pointer" onClick={() => handleAction('Set Role: Admin', member)}>
                   Admin
                 </ContextMenuItem>
