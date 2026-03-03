@@ -10,6 +10,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { Toaster } from 'sonner';
 import { UserSettingsModal } from '@/components/modals/user-settings-modal';
 import { UserProfileModal } from '@/components/modals/user-profile-modal';
+import { ServerSettingsModal } from '@/components/modals/server-settings-modal';
 import { DMSidebar } from '@/components/layout/dm-sidebar';
 import { DMView } from '@/components/layout/dm-view';
 
@@ -20,6 +21,7 @@ export const DiscordLayout = () => {
   const [servers, setServers] = useState<any[]>([]);
 
   const [isServerModalOpen, setIsServerModalOpen] = useState(false);
+  const [isServerSettingsModalOpen, setIsServerSettingsModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
@@ -106,25 +108,30 @@ export const DiscordLayout = () => {
   };
 
   const handleStartDM = async (targetUserId: string) => {
-    if (!user) return;
-    try {
-      const response = await fetch('/api/channels/dm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, targetUserId }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Failed to start DM: ${errorData.error || 'Unknown error'}`);
-        return;
-      }
+    // ... existing code ...
+  };
 
-      const dmChannel = await response.json();
-      setActiveChannel(dmChannel);
-    } catch (error) {
-      console.error('Error starting DM:', error);
-      alert('Failed to start DM.');
+  const handleLeaveServer = async (serverId: string) => {
+    if (!user) return;
+    if (confirm("Are you sure you want to leave this server?")) {
+        try {
+            const res = await fetch(`/api/servers/${serverId}/leave`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id })
+            });
+            if (res.ok) {
+                setServers(servers.filter(s => s.id !== serverId));
+                setActiveServer(null);
+                setActiveChannel(null);
+                toast.success("Left server");
+            } else {
+                const data = await res.json();
+                toast.error(data.error || "Failed to leave server");
+            }
+        } catch (error) {
+            toast.error("Failed to leave server");
+        }
     }
   };
 
@@ -157,6 +164,8 @@ export const DiscordLayout = () => {
             activeChannel={activeChannel} 
             onSelectChannel={setActiveChannel}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
+            onOpenServerSettings={() => setIsServerSettingsModalOpen(true)}
+            onLeaveServer={() => handleLeaveServer(activeServer.id)}
           />
           
           {/* Main Chat Area */}
@@ -211,6 +220,22 @@ export const DiscordLayout = () => {
         onClose={() => setSelectedUser(null)}
         user={selectedUser}
         onStartDM={handleStartDM}
+      />
+
+      {/* Server Settings Modal */}
+      <ServerSettingsModal
+        isOpen={isServerSettingsModalOpen}
+        onClose={() => setIsServerSettingsModalOpen(false)}
+        server={activeServer}
+        onUpdateServer={(updated) => {
+            setActiveServer(updated);
+            setServers(servers.map(s => s.id === updated.id ? updated : s));
+        }}
+        onDeleteServer={(serverId) => {
+            setServers(servers.filter(s => s.id !== serverId));
+            setActiveServer(null);
+            setActiveChannel(null);
+        }}
       />
 
       <Toaster theme="dark" position="bottom-center" />

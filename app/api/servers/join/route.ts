@@ -27,6 +27,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid invite code' }, { status: 404 });
     }
 
+    // Check if user is banned
+    const banned = await prisma.serverBan.findUnique({
+      where: {
+        userId_serverId: {
+          userId,
+          serverId: server.id,
+        },
+      },
+    });
+
+    if (banned) {
+      return NextResponse.json({ error: 'You are banned from this server' }, { status: 403 });
+    }
+
     // Check if user is already a member
     const existingMember = await prisma.serverMember.findUnique({
       where: {

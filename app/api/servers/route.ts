@@ -22,11 +22,21 @@ export async function POST(req: Request) {
         imageUrl,
         inviteCode,
         ownerId,
-        members: {
-          create: {
-            userId: ownerId,
-            role: 'ADMIN',
-          }
+        roles: {
+          create: [
+            {
+              name: 'Creator',
+              color: '#F04747',
+              position: 999,
+              permissions: 'ADMIN',
+            },
+            {
+              name: 'Member',
+              color: '#99AAB5',
+              position: 0,
+              permissions: 'VIEW_CHANNELS',
+            }
+          ]
         },
         categories: {
           create: [
@@ -51,6 +61,7 @@ export async function POST(req: Request) {
         }
       },
       include: {
+        roles: true,
         categories: {
           include: {
             channels: true
@@ -58,6 +69,21 @@ export async function POST(req: Request) {
         }
       }
     });
+
+    // Assign Creator role to owner
+    const creatorRole = server.roles.find(r => r.name === 'Creator');
+    if (creatorRole) {
+      await prisma.serverMember.create({
+        data: {
+          userId: ownerId,
+          serverId: server.id,
+          role: 'ADMIN', // Keep legacy field for now
+          roles: {
+            connect: { id: creatorRole.id }
+          }
+        }
+      });
+    }
 
     return NextResponse.json(server);
   } catch (error) {
@@ -88,7 +114,8 @@ export async function GET(req: Request) {
           include: {
             channels: true
           }
-        }
+        },
+        roles: true
       }
     });
 

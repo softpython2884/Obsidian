@@ -1,19 +1,29 @@
 'use client';
 
 import React from 'react';
-import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus } from 'lucide-react';
+import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus, LogOut, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ChannelSidebarProps {
   server: any;
   activeChannel: any;
   onSelectChannel: (channel: any) => void;
   onOpenSettings: () => void;
+  onOpenServerSettings?: () => void;
+  onLeaveServer?: () => void;
 }
 
-export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenSettings }: ChannelSidebarProps) => {
+export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenSettings, onOpenServerSettings, onLeaveServer }: ChannelSidebarProps) => {
   const { user } = useAuth();
 
   if (!server) {

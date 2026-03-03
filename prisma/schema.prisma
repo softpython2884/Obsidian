@@ -12,7 +12,8 @@ datasource db {
 
 model User {
   id            String    @id @default(uuid())
-  pseudo        String
+  username      String    @unique @default(cuid()) // Unique handle
+  pseudo        String    // Display name
   avatarUrl     String?
   bannerUrl     String?
   bio           String?
@@ -20,7 +21,7 @@ model User {
   accentColor   String?   // Hex color code
   socialLinks   String?   // JSON string of social links
   state         String    @default("ONLINE") // ONLINE, IDLE, DND, INVISIBLE
-  role          String    @default("MEMBER") // ADMIN, MODERATOR, MEMBER
+  role          String    @default("MEMBER") // Global role: ADMIN, MODERATOR, MEMBER
   isHost        Boolean   @default(false)
   publicKey     String?
   privateKey    String?   // Encrypted with MASTER_ENCRYPTION_KEY
@@ -34,6 +35,11 @@ model User {
   servers       ServerMember[]
   ownedServers  Server[]
   channels      Channel[] @relation("ChannelMembers")
+  
+  friends       User[]    @relation("UserFriends")
+  friendOf      User[]    @relation("UserFriends")
+  
+  bans          ServerBan[]
 }
 
 model Server {
@@ -49,15 +55,49 @@ model Server {
 
   categories  Category[]
   members     ServerMember[]
+  roles       Role[]
+  bans        ServerBan[]
+}
+
+model ServerBan {
+  id        String   @id @default(uuid())
+  userId    String
+  serverId  String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  server    Server   @relation(fields: [serverId], references: [id])
+
+  @@unique([userId, serverId])
+}
+
+model Role {
+  id          String    @id @default(uuid())
+  name        String
+  color       String    @default("#99AAB5") // Hex or Gradient
+  position    Int       @default(0)
+  permissions String    @default("VIEW_CHANNELS") // JSON string of permissions
+  iconUrl     String?
+  serverId    String
+  server      Server    @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  members     ServerMember[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model ServerMember {
   id        String   @id @default(uuid())
   userId    String
   serverId  String
-  role      String   @default("MEMBER")
+  // Deprecated: use roles relation instead
+  role      String   @default("MEMBER") 
+  
   user      User     @relation(fields: [userId], references: [id])
   server    Server   @relation(fields: [serverId], references: [id])
+  roles     Role[]
+  
   joinedAt  DateTime @default(now())
 
   @@unique([userId, serverId])
