@@ -525,69 +525,32 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                     )}
 
                     {/* Message Actions - Floating & Minimal */}
-                    <div className="absolute right-0 -top-4 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl p-1 hidden group-hover:flex items-center space-x-0.5 z-20 backdrop-blur-md">
-                      {/* Reactions hidden until implemented
-                      <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div 
-                                    className="p-1.5 hover:bg-white/10 rounded-md cursor-pointer text-white/60 hover:text-white transition-colors"
-                                    onClick={() => alert('Reactions coming soon!')}
-                                >
-                                    <Smile size={14} />
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="bg-black text-xs">Add Reaction</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      */}
+                    <div className="absolute right-0 -top-4 bg-[#1E1F22] border border-black/20 rounded-lg shadow-xl p-1 hidden group-hover:flex items-center space-x-0.5 z-20">
+                      <div
+                        className="p-1.5 hover:bg-white/10 rounded-md cursor-pointer text-white/60 hover:text-white transition-colors"
+                        onClick={() => {
+                          setMessageToForward(msg);
+                          setIsForwardModalOpen(true);
+                        }}
+                      >
+                        <CornerUpRight size={14} />
+                      </div>
 
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div
-                              className="p-1.5 hover:bg-white/10 rounded-md cursor-pointer text-white/60 hover:text-white transition-colors"
-                              onClick={() => {
-                                setMessageToForward(msg);
-                                setIsForwardModalOpen(true);
-                              }}
-                            >
-                              <CornerUpRight size={14} />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="bg-black text-xs">Forward</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-
-                      {(user?.id === msg.user.id || user?.role === 'ADMIN') && (
+                      {(user?.id === msg.user.id || user?.role === 'ADMIN' || server?.ownerId === user?.id) && (
                         <>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div
-                                  className="p-1.5 hover:bg-white/10 rounded-md cursor-pointer text-white/60 hover:text-white transition-colors"
-                                  onClick={() => handleEditMessage(msg)}
-                                >
-                                  <Pencil size={14} />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="bg-black text-xs">Edit</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <div
+                            className="p-1.5 hover:bg-white/10 rounded-md cursor-pointer text-white/60 hover:text-white transition-colors"
+                            onClick={() => handleEditMessage(msg)}
+                          >
+                            <Pencil size={14} />
+                          </div>
 
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div
-                                  className="p-1.5 hover:bg-red-500/10 rounded-md cursor-pointer text-white/60 hover:text-red-500 transition-colors"
-                                  onClick={() => handleDeleteMessage(msg.id)}
-                                >
-                                  <Trash2 size={14} />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="bg-black text-xs">Delete</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <div
+                            className="p-1.5 hover:bg-red-500/10 rounded-md cursor-pointer text-white/60 hover:text-red-500 transition-colors"
+                            onClick={() => handleDeleteMessage(msg.id)}
+                          >
+                            <Trash2 size={14} />
+                          </div>
                         </>
                       )}
                     </div>
@@ -648,30 +611,35 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
 
       {/* Input Area - Floating & Clean */}
       <div className="shrink-0 px-6 pb-6 pt-2 bg-[#313338]">
-        <div className="relative flex items-end rounded-2xl bg-[#383A40] p-2 shadow-sm transition-all">
-          <div className="flex items-center pb-2 pl-2 space-x-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors"
-                    onClick={() => setIsEmbedModalOpen(true)}
-                  >
-                    <Plus size={20} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-black text-xs">Add Embed</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+        <div className="mb-2 h-4 text-[10px] text-white/30 px-2 font-mono flex justify-between">
+          <span>
+            {typingUsers.length > 0 && (
+              <span className="animate-pulse text-emerald-500">
+                {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
+              </span>
+            )}
+          </span>
+          <span className="opacity-50 bg-[#2B2D31] px-2 py-0.5 rounded text-[9px] uppercase tracking-wider">
+            /help for commands
+          </span>
+        </div>
+        <div className="relative flex items-center rounded-2xl bg-[#383A40] p-2 shadow-sm transition-all focus-within:ring-1 focus-within:ring-white/5">
+          <div className="flex items-center pl-2 space-x-2">
+            <button
+              className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+              onClick={() => setIsEmbedModalOpen(true)}
+            >
+              <Plus size={20} />
+            </button>
           </div>
 
-          <div className="flex-1 min-w-0 py-2 px-2">
+          <div className="flex-1 min-w-0 px-2">
             <input
               value={inputValue}
               onChange={handleTyping}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
               placeholder={`Message #${channelName}`}
-              className="w-full bg-transparent text-white text-[15px] outline-none placeholder:text-white/20"
+              className="w-full bg-transparent text-white text-[15px] outline-none placeholder:text-white/20 text-center"
               autoComplete="off"
             />
           </div>
@@ -715,18 +683,6 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
               <Send size={18} />
             </button>
           </div>
-        </div>
-        <div className="mt-2 h-4 text-[10px] text-white/30 px-2 font-mono flex justify-between">
-          <span>
-            {typingUsers.length > 0 && (
-              <span className="animate-pulse text-emerald-500">
-                {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
-              </span>
-            )}
-          </span>
-          <span className="opacity-50">
-            /help for commands
-          </span>
         </div>
       </div>
       <EmbedCreatorModal

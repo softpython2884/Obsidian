@@ -60,10 +60,10 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
 
   if (!server) return <div className="hidden w-60 flex-col bg-black/60 backdrop-blur-sm lg:flex" />;
 
-  const admins = members.filter((m) => m.role === 'ADMIN' && m.user);
-  const moderators = members.filter((m) => m.role === 'MODERATOR' && m.user);
-  const onlineMembers = members.filter((m) => m.role === 'MEMBER' && m.user?.state === 'ONLINE');
-  const offlineMembers = members.filter((m) => m.user?.state === 'OFFLINE');
+  const admins = members.filter((m) => (m.role === 'ADMIN' || m.userId === server.ownerId) && m.user);
+  const moderators = members.filter((m) => m.role === 'MODERATOR' && m.userId !== server.ownerId && m.user);
+  const onlineMembers = members.filter((m) => (m.role === 'MEMBER' || !m.role) && m.userId !== server.ownerId && m.user?.state !== 'OFFLINE' && m.user?.state !== 'INVISIBLE');
+  const offlineMembers = members.filter((m) => (m.user?.state === 'OFFLINE' || m.user?.state === 'INVISIBLE') && m.user);
 
   const handleAction = (action: string, member: any) => {
     alert(`${action} ${member.user?.pseudo || 'User'} - Feature coming soon!`);
@@ -91,7 +91,7 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
               )} />
             </div>
             <div className="ml-2 flex flex-col overflow-hidden">
-              <span className="truncate text-sm font-bold leading-tight flex items-center" style={{ color: member.role === 'ADMIN' ? '#F04747' : member.role === 'MODERATOR' ? '#FAA61A' : '#949BA4' }}>
+              <span className="truncate text-sm font-bold leading-tight flex items-center" style={{ color: (member.role === 'ADMIN' || member.userId === server.ownerId) ? '#F04747' : member.role === 'MODERATOR' ? '#FAA61A' : '#949BA4' }}>
                 {member.user.pseudo}
                 {server.ownerId === member.userId && <Crown size={12} className="ml-1 text-[#F0B232]" fill="#F0B232" />}
                 {member.role === 'ADMIN' && server.ownerId !== member.userId && <Shield size={12} className="ml-1 text-[#F04747]" />}
@@ -124,7 +124,7 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
             Message
           </ContextMenuItem>
 
-          {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MODERATOR') && (
+          {(currentUser?.role === 'ADMIN' || currentUser?.role === 'MODERATOR' || server.ownerId === currentUser?.id) && (
             <>
               <ContextMenuSeparator className="bg-white/5" />
               <ContextMenuItem
