@@ -24,7 +24,7 @@ interface ChannelSidebarProps {
 }
 
 export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenSettings, onOpenServerSettings, onLeaveServer }: ChannelSidebarProps) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isMicMuted, setIsMicMuted] = React.useState(false);
   const [isDeafened, setIsDeafened] = React.useState(false);
 
@@ -53,9 +53,9 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
             {server.name}
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-white/5" />
-          
+
           {server.inviteCode && (
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="cursor-pointer text-emerald-500 focus:bg-emerald-500/10 focus:text-emerald-500 rounded-lg text-xs font-medium"
               onClick={() => {
                 navigator.clipboard.writeText(server.inviteCode);
@@ -68,19 +68,19 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
           )}
 
           {(server.ownerId === user?.id) && (
-             <DropdownMenuItem 
-                className="cursor-pointer text-white/80 focus:bg-white/5 focus:text-white rounded-lg text-xs font-medium"
-                onClick={onOpenServerSettings}
-             >
-               <Settings className="mr-2 h-3.5 w-3.5" />
-               <span>Server Settings</span>
-             </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer text-white/80 focus:bg-white/5 focus:text-white rounded-lg text-xs font-medium"
+              onClick={onOpenServerSettings}
+            >
+              <Settings className="mr-2 h-3.5 w-3.5" />
+              <span>Server Settings</span>
+            </DropdownMenuItem>
           )}
 
           <DropdownMenuSeparator className="bg-white/5" />
 
           {server.ownerId !== user?.id && (
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="cursor-pointer text-red-500 focus:bg-red-500/10 focus:text-red-500 rounded-lg text-xs font-medium"
               onClick={onLeaveServer}
             >
@@ -106,8 +106,8 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
                   onClick={() => onSelectChannel(channel)}
                   className={cn(
                     "group flex cursor-pointer items-center rounded-lg px-2 py-1.5 transition-all duration-200",
-                    activeChannel?.id === channel.id 
-                      ? "bg-white/10 text-white" 
+                    activeChannel?.id === channel.id
+                      ? "bg-white/10 text-white"
                       : "text-white/40 hover:bg-white/5 hover:text-white/80"
                   )}
                 >
@@ -126,47 +126,58 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
       {/* User Footer - Minimal */}
       <div className="bg-[#050505] px-3 py-3 border-t border-white/5">
         <div className="flex items-center justify-between bg-[#111] rounded-xl p-1.5 border border-white/5">
-            <div 
+          <div
             className="flex flex-1 cursor-pointer items-center rounded-lg px-1 py-1 hover:bg-white/5 transition-colors"
             onClick={onOpenSettings}
-            >
+          >
             <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 shadow-inner">
-                {user?.avatarUrl ? (
+              {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.pseudo} className="h-full w-full object-cover" />
-                ) : (
+              ) : (
                 <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white">
-                    {user?.pseudo?.charAt(0).toUpperCase()}
+                  {user?.pseudo?.charAt(0).toUpperCase()}
                 </div>
-                )}
-                <div className={cn(
+              )}
+              <div className={cn(
                 "absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#111]",
-                user?.state === 'ONLINE' ? "bg-emerald-500" : 
-                user?.state === 'IDLE' ? "bg-amber-500" : 
-                user?.state === 'DND' ? "bg-red-500" : "bg-white/20"
-                )} />
+                user?.state === 'ONLINE' ? "bg-emerald-500" :
+                  user?.state === 'IDLE' ? "bg-amber-500" :
+                    user?.state === 'DND' ? "bg-red-500" : "bg-white/20"
+              )} />
             </div>
             <div className="ml-2.5 flex flex-col overflow-hidden">
-                <span className="truncate text-xs font-semibold text-white leading-tight">{user?.pseudo}</span>
-                <span className="truncate text-[10px] text-white/30 leading-tight font-mono">#{user?.id.slice(0, 4)}</span>
+              <span className="truncate text-xs font-semibold text-white leading-tight">{user?.pseudo}</span>
+              <span className="truncate text-[10px] text-white/30 leading-tight font-mono">#{user?.id.slice(0, 4)}</span>
             </div>
+          </div>
+          <div className="flex items-center space-x-0.5 ml-1">
+            <div
+              className={cn("p-1.5 rounded-lg cursor-pointer transition-colors", isMicMuted ? "text-red-500 bg-red-500/10 hover:bg-red-500/20" : "text-white/40 hover:bg-white/10 hover:text-white")}
+              onClick={() => setIsMicMuted(!isMicMuted)}
+            >
+              <Mic size={14} className={cn(isMicMuted && "fill-current")} />
             </div>
-            <div className="flex items-center space-x-0.5 ml-1">
-                <div 
-                  className={cn("p-1.5 rounded-lg cursor-pointer transition-colors", isMicMuted ? "text-red-500 bg-red-500/10 hover:bg-red-500/20" : "text-white/40 hover:bg-white/10 hover:text-white")}
-                  onClick={() => setIsMicMuted(!isMicMuted)}
-                >
-                    <Mic size={14} className={cn(isMicMuted && "fill-current")} />
-                </div>
-                <div 
-                  className={cn("p-1.5 rounded-lg cursor-pointer transition-colors", isDeafened ? "text-red-500 bg-red-500/10 hover:bg-red-500/20" : "text-white/40 hover:bg-white/10 hover:text-white")}
-                  onClick={() => setIsDeafened(!isDeafened)}
-                >
-                    <Headphones size={14} className={cn(isDeafened && "fill-current")} />
-                </div>
-                <div className="p-1.5 rounded-lg hover:bg-white/10 cursor-pointer text-white/40 hover:text-white transition-colors" onClick={onOpenSettings}>
-                    <Settings2 size={14} />
-                </div>
+            <div
+              className={cn("p-1.5 rounded-lg cursor-pointer transition-colors", isDeafened ? "text-red-500 bg-red-500/10 hover:bg-red-500/20" : "text-white/40 hover:bg-white/10 hover:text-white")}
+              onClick={() => setIsDeafened(!isDeafened)}
+            >
+              <Headphones size={14} className={cn(isDeafened && "fill-current")} />
             </div>
+            <div className="p-1.5 rounded-lg hover:bg-white/10 cursor-pointer text-white/40 hover:text-white transition-colors" onClick={onOpenSettings}>
+              <Settings2 size={14} />
+            </div>
+            <div
+              className="p-1.5 rounded-lg hover:bg-red-500/10 cursor-pointer text-white/40 hover:text-red-500 transition-colors"
+              onClick={() => {
+                if (confirm("Are you sure you want to log out?")) {
+                  logout();
+                }
+              }}
+              title="Logout"
+            >
+              <LogOut size={14} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

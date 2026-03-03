@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { MessageSquare, Settings, UserPlus, X } from 'lucide-react';
+import { MessageSquare, Settings, UserPlus, X, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 
@@ -12,7 +12,7 @@ interface DMSidebarProps {
 }
 
 export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DMSidebarProps) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [dms, setDms] = useState<any[]>([]);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
     <div className="flex w-60 flex-col bg-black/60 backdrop-blur-sm">
       {/* Search/Header */}
       <div className="flex h-12 items-center border-b border-white/10 px-4 shadow-sm">
-        <button 
+        <button
           className="flex w-full items-center rounded bg-[#1E1F22] px-2 py-1 text-sm text-[#949BA4] transition-colors hover:text-[#DBDEE1]"
           onClick={() => onSelectChannel(null)} // Go to Friends/Start DM view
         >
@@ -71,9 +71,9 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
                   )}
                   <div className={cn(
                     "absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#2B2D31]",
-                    otherMember?.state === 'ONLINE' ? "bg-[#23A559]" : 
-                    otherMember?.state === 'IDLE' ? "bg-[#F0B232]" : 
-                    otherMember?.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
+                    otherMember?.state === 'ONLINE' ? "bg-[#23A559]" :
+                      otherMember?.state === 'IDLE' ? "bg-[#F0B232]" :
+                        otherMember?.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
                   )} />
                 </div>
                 <div className="flex flex-col overflow-hidden">
@@ -97,7 +97,7 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
 
       {/* User Footer */}
       <div className="flex h-[52px] items-center bg-black/40 px-2 border-t border-white/5">
-        <div 
+        <div
           className="flex flex-1 cursor-pointer items-center rounded px-1 py-1 hover:bg-white/10"
           onClick={onOpenSettings}
         >
@@ -111,9 +111,9 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
             )}
             <div className={cn(
               "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#232428]",
-              user?.state === 'ONLINE' ? "bg-[#23A559]" : 
-              user?.state === 'IDLE' ? "bg-[#F0B232]" : 
-              user?.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
+              user?.state === 'ONLINE' ? "bg-[#23A559]" :
+                user?.state === 'IDLE' ? "bg-[#F0B232]" :
+                  user?.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
             )} />
           </div>
           <div className="ml-2 flex flex-col overflow-hidden">
@@ -122,11 +122,22 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
           </div>
         </div>
         <div className="flex items-center space-x-1">
-          <div 
+          <div
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded text-[#B5BAC1] hover:bg-white/10 hover:text-[#DBDEE1]"
             onClick={onOpenSettings}
           >
             <Settings size={20} />
+          </div>
+          <div
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded text-[#B5BAC1] hover:bg-red-500/10 hover:text-red-500"
+            onClick={() => {
+              if (confirm("Are you sure you want to log out?")) {
+                logout();
+              }
+            }}
+            title="Logout"
+          >
+            <LogOut size={20} />
           </div>
         </div>
       </div>

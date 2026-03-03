@@ -19,7 +19,7 @@ export const ServerSidebar = ({ servers, activeServer, onSelectServer, onOpenMod
       <TooltipProvider>
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
-            <div 
+            <div
               className="group relative flex items-center justify-center w-full"
               onClick={() => onSelectServer(null)}
             >
@@ -29,9 +29,9 @@ export const ServerSidebar = ({ servers, activeServer, onSelectServer, onOpenMod
               )} />
               <div className={cn(
                 "flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl transition-all duration-300 shadow-lg",
-                !activeServer 
-                  ? "bg-emerald-500 text-white shadow-emerald-500/20" 
-                  : "bg-[#1a1a1a] text-white/40 hover:bg-emerald-500/10 hover:text-emerald-500"
+                !activeServer
+                  ? "bg-[#5865F2] text-white shadow-[#5865F2]/20"
+                  : "bg-[#1a1a1a] text-white/40 hover:bg-[#5865F2]/10 hover:text-[#5865F2]"
               )}>
                 <MessageSquare size={24} />
               </div>
@@ -58,8 +58,8 @@ export const ServerSidebar = ({ servers, activeServer, onSelectServer, onOpenMod
                   )} />
                   <div className={cn(
                     "flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-2xl transition-all duration-300 border border-transparent",
-                    activeServer?.id === server.id 
-                      ? "ring-2 ring-white/10 shadow-lg shadow-black/50" 
+                    activeServer?.id === server.id
+                      ? "ring-2 ring-white/10 shadow-lg shadow-black/50"
                       : "hover:bg-white/5 hover:border-white/5"
                   )}>
                     {server.imageUrl ? (
@@ -84,8 +84,8 @@ export const ServerSidebar = ({ servers, activeServer, onSelectServer, onOpenMod
       <TooltipProvider>
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
-            <button 
-              className="group flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl bg-[#1a1a1a] text-emerald-500 transition-all duration-300 hover:bg-emerald-500 hover:text-white hover:shadow-lg hover:shadow-emerald-500/20 border border-white/5 hover:border-transparent"
+            <button
+              className="group flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl bg-[#1a1a1a] text-white/40 transition-all duration-300 hover:bg-[#23a559] hover:text-white hover:shadow-lg hover:shadow-[#23a559]/20 border border-white/5 hover:border-transparent"
               onClick={onOpenModal}
             >
               <Plus size={24} />
