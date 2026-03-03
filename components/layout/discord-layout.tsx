@@ -15,7 +15,7 @@ import { DMSidebar } from '@/components/layout/dm-sidebar';
 import { DMView } from '@/components/layout/dm-view';
 
 export const DiscordLayout = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [activeServer, setActiveServer] = useState<any>(null);
   const [activeChannel, setActiveChannel] = useState<any>(null);
   const [servers, setServers] = useState<any[]>([]);
@@ -32,9 +32,20 @@ export const DiscordLayout = () => {
 
   useEffect(() => {
     if (user) {
-      fetch(`/api/servers?userId=${user.id}`)
-        .then((res) => res.json())
-        .then((data) => {
+      const fetchServers = async () => {
+        try {
+          const res = await fetch(`/api/servers?userId=${user.id}`);
+
+          if (!res.ok) {
+            if (res.status === 404 || res.status === 400 || res.status === 401) {
+              console.warn("Session stale or user not found. Logging out.");
+              logout();
+              return;
+            }
+            throw new Error(res.statusText);
+          }
+
+          const data = await res.json();
           if (Array.isArray(data)) {
             setServers(data);
             if (data.length > 0) {
@@ -43,13 +54,16 @@ export const DiscordLayout = () => {
                 setActiveChannel(data[0].categories[0].channels[0]);
               }
             }
-          } else {
-            console.error('Failed to fetch servers: expected array, got', data);
-            setServers([]);
           }
-        });
+        } catch (error) {
+          console.error('Failed to fetch servers:', error);
+          setServers([]);
+        }
+      };
+
+      fetchServers();
     }
-  }, [user]);
+  }, [user, logout]);
 
   const handleCreateServer = async (name: string) => {
     if (!user) return;

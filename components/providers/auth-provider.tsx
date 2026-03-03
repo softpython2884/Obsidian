@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(JSON.parse(storedUser));
       }
       setIsLoading(false);
-    }, 4000);
+    }, 0);
     return () => clearTimeout(timer);
   }, []);
 
