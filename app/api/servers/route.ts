@@ -119,7 +119,12 @@ export async function GET(req: Request) {
             }
           }
         },
-        roles: true
+        roles: true,
+        members: {
+          include: {
+            roles: true
+          }
+        }
       }
     });
 
