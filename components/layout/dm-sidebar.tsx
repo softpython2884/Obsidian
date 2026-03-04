@@ -1,16 +1,17 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { MessageSquare, Settings, UserPlus, X, LogOut } from 'lucide-react';
+import { MessageSquare, Settings, UserPlus, X, LogOut, User, UserX, Trash2, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
+import { toast } from 'sonner';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  ContextMenuSeparator,
 } from "@/components/ui/context-menu";
-import { User, UserX, MessageSquare, Trash2 } from 'lucide-react';
 
 interface DMSidebarProps {
   activeChannel: any;
@@ -128,6 +129,27 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
                   >
                     <Trash2 size={14} className="mr-2" />
                     Close DM
+                  </ContextMenuItem>
+                  <ContextMenuSeparator className="bg-white/5" />
+                  <ContextMenuItem
+                    className="hover:bg-white/10 hover:text-white cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(otherMember?.id || '');
+                      toast.success("User ID Copied");
+                    }}
+                  >
+                    <Copy size={14} className="mr-2" />
+                    Copy User ID
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    className="hover:bg-white/10 hover:text-white cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(dm.id);
+                      toast.success("DM ID Copied");
+                    }}
+                  >
+                    <Copy size={14} className="mr-2" />
+                    Copy DM ID
                   </ContextMenuItem>
                 </ContextMenuContent>
               </ContextMenu>

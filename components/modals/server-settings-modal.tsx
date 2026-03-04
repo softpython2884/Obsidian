@@ -9,9 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, Shield, Hash, Volume2, UserX, Ban, Save, Lock } from "lucide-react";
+import { Trash2, Plus, Shield, Hash, Volume2, UserX, Ban, Save, Lock, ChevronUp, ChevronDown, Settings2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { RoleManagementModal } from "@/components/modals/role-management-modal";
 
 interface ServerSettingsModalProps {
   isOpen: boolean;
@@ -39,6 +40,8 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
 
   // Members State
   const [members, setMembers] = useState<any[]>([]);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
   const refreshServer = async () => {
     try {
@@ -218,6 +221,34 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
     handleReorderChannels(category.id, newChannels);
   };
 
+  const handleReorderCategories = async (newCategories: any[]) => {
+    try {
+      const list = newCategories.map((cat, index) => ({ id: cat.id, position: index }));
+      const res = await fetch(`/api/servers/${server.id}/categories/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ list }),
+      });
+      if (res.ok) {
+        toast.success("Categories reordered");
+        refreshServer();
+      }
+    } catch (error) {
+      toast.error("Failed to reorder categories");
+    }
+  };
+
+  const moveCategory = (index: number, direction: 'up' | 'down') => {
+    const newCategories = [...categories];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newCategories.length) return;
+
+    const [moved] = newCategories.splice(index, 1);
+    newCategories.splice(targetIndex, 0, moved);
+    setCategories(newCategories);
+    handleReorderCategories(newCategories);
+  };
+
   const handleCreateCategory = async (name: string) => {
     try {
       const res = await fetch(`/api/servers/${server.id}/categories`, {
@@ -261,6 +292,23 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
       } catch (error) {
         toast.error("Failed to delete category");
       }
+    }
+  };
+
+  const handleUpdateMemberRoles = async (userId: string, roleIds: string[]) => {
+    try {
+      const response = await fetch(`/api/servers/${server.id}/members/${userId}/roles`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roleIds }),
+      });
+
+      if (response.ok) {
+        toast.success("Roles updated");
+        refreshServer();
+      }
+    } catch (error) {
+      toast.error("Failed to update roles");
     }
   };
 
@@ -538,10 +586,30 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
               </div>
               <ScrollArea className="flex-1 pr-4">
                 <div className="space-y-6 pb-6">
-                  {categories.map((category) => (
+                  {categories.map((category, catIndex) => (
                     <div key={category.id} className="bg-[#2B2D31] rounded-lg overflow-hidden border border-white/5">
-                      <div className="p-3 bg-[#232428] flex items-center justify-between">
+                      <div className="p-3 bg-[#232428] flex items-center justify-between group/cat">
                         <div className="flex items-center space-x-2">
+                          <div className="flex flex-col -space-y-1 opacity-0 group-hover/cat:opacity-100 transition-opacity mr-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-4 w-4 text-[#949BA4] hover:text-white disabled:opacity-30"
+                              onClick={() => moveCategory(catIndex, 'up')}
+                              disabled={catIndex === 0}
+                            >
+                              <ChevronUp size={10} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-4 w-4 text-[#949BA4] hover:text-white disabled:opacity-30"
+                              onClick={() => moveCategory(catIndex, 'down')}
+                              disabled={catIndex === categories.length - 1}
+                            >
+                              <ChevronDown size={10} />
+                            </Button>
+                          </div>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -551,7 +619,7 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
                               if (name && name !== category.name) handleUpdateCategory(category.id, name);
                             }}
                           >
-                            <Plus className="rotate-45 h-3 w-3" />
+                            <Settings2 className="h-3 w-3" />
                           </Button>
                           <span className="text-xs font-bold uppercase text-[#949BA4]">{category.name}</span>
                         </div>
@@ -575,26 +643,77 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
                         </div>
                       </div>
                       <div className="divide-y divide-white/5">
-                        {category.channels?.map((channel: any) => (
+                        {category.channels?.map((channel: any, chIndex: number) => (
                           <div
                             key={channel.id}
-                            className="p-3 flex items-center justify-between hover:bg-[#35373C] transition-colors group"
-                            onClick={() => setEditingChannel(channel)}
+                            className="p-3 hover:bg-white/5 group flex items-center justify-between transition-colors h-14"
                           >
-                            <div className="flex items-center space-x-3">
-                              {channel.isPrivate ? <Lock size={16} className="text-[#F0B232]" /> : (channel.type === 'VOICE' ? <Volume2 size={16} className="text-[#949BA4]" /> : <Hash size={16} className="text-[#949BA4]" />)}
-                              <span className="font-medium text-sm">{channel.name}</span>
-                              {channel.isPrivate && (
-                                <span className="text-[10px] bg-[#F0B232]/10 text-[#F0B232] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Private</span>
+                            <div className="flex items-center space-x-3 flex-1 min-w-0 pointer-events-none">
+                              {channel.isPrivate ? (
+                                <Lock size={16} className="text-[#F0B232] shrink-0" />
+                              ) : (
+                                channel.type === 'VOICE' ? (
+                                  <Volume2 size={16} className="text-[#949BA4] shrink-0" />
+                                ) : (
+                                  <Hash size={16} className="text-[#949BA4] shrink-0" />
+                                )
                               )}
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-sm font-medium text-[#DBDEE1] truncate">{channel.name}</span>
+                                {channel.isPrivate && (
+                                  <span className="text-[10px] text-[#F0B232] font-bold uppercase tracking-wider">Private</span>
+                                )}
+                              </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-[#949BA4] group-hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Shield size={16} />
-                            </Button>
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <select
+                                className="bg-[#1E1F22] text-[10px] text-[#B5BAC1] rounded px-1 py-1 border-none outline-none mr-2 cursor-pointer hover:bg-[#35373C]"
+                                value={category.id}
+                                onChange={(e) => {
+                                  if (e.target.value !== category.id) {
+                                    handleReorderChannels(e.target.value, [channel]);
+                                  }
+                                }}
+                              >
+                                {categories.map(cat => (
+                                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                              </select>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-[#949BA4] hover:text-white disabled:opacity-30"
+                                onClick={(e) => { e.stopPropagation(); moveChannel(categories.indexOf(category), chIndex, 'up'); }}
+                                disabled={chIndex === 0}
+                              >
+                                <ChevronUp size={14} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-[#949BA4] hover:text-white disabled:opacity-30"
+                                onClick={(e) => { e.stopPropagation(); moveChannel(categories.indexOf(category), chIndex, 'down'); }}
+                                disabled={chIndex === (category.channels?.length - 1)}
+                              >
+                                <ChevronDown size={14} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-[#949BA4] hover:text-white"
+                                onClick={(e) => { e.stopPropagation(); setEditingChannel(channel); }}
+                              >
+                                <Settings2 size={14} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-[#F23F43] hover:bg-[#F23F43]/10"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteChannel(channel.id); }}
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -715,6 +834,18 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-[#B5BAC1] hover:bg-white/5"
+                        title="Manage Roles"
+                        onClick={() => {
+                          setSelectedMember(member);
+                          setIsRoleModalOpen(true);
+                        }}
+                      >
+                        <Shield size={16} />
+                      </Button>
                       {(member.user.id !== user?.id && (user?.id === server.ownerId || user?.role === 'ADMIN')) && member.user.id !== server.ownerId && (
                         <>
                           <Button
@@ -744,26 +875,19 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
             </TabsContent>
           </div>
         </Tabs>
+        {selectedMember && (
+          <RoleManagementModal
+            isOpen={isRoleModalOpen}
+            onClose={() => setIsRoleModalOpen(false)}
+            user={selectedMember.user}
+            member={selectedMember}
+            serverRoles={roles}
+            onUpdateRoles={handleUpdateMemberRoles}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
 };
 
-function ChevronRight({ size, className }: { size?: number, className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size || 24}
-      height={size || 24}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <polyline points="9 18 15 12 9 6"></polyline>
-    </svg>
-  )
-}
+

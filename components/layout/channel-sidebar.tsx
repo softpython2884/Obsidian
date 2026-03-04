@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus, LogOut, Trash2, Volume2, Lock } from 'lucide-react';
+import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus, LogOut, Trash2, Volume2, Lock, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  ContextMenuSeparator,
 } from "@/components/ui/context-menu";
 
 interface ChannelSidebarProps {
@@ -105,10 +106,26 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
       <div className="flex-1 overflow-y-auto px-2 py-4 no-scrollbar space-y-6">
         {server.categories?.map((category: any) => (
           <div key={category.id} className="mb-2">
-            <div className="mb-1 flex items-center px-2 text-[10px] font-bold uppercase text-white/30 tracking-wider hover:text-white/50 transition-colors cursor-default">
-              <ChevronDown size={10} className="mr-1" />
-              {category.name}
-            </div>
+            <ContextMenu>
+              <ContextMenuTrigger>
+                <div className="mb-1 flex items-center px-2 text-[10px] font-bold uppercase text-white/30 tracking-wider hover:text-white/50 transition-colors cursor-default">
+                  <ChevronDown size={10} className="mr-1" />
+                  {category.name}
+                </div>
+              </ContextMenuTrigger>
+              <ContextMenuContent className="w-48 bg-[#111214] border-[#1e1f22] text-[#B5BAC1]">
+                <ContextMenuItem
+                  className="hover:bg-white/10 hover:text-white cursor-pointer"
+                  onClick={() => {
+                    navigator.clipboard.writeText(category.id);
+                    toast.success("Category ID Copied");
+                  }}
+                >
+                  <Copy size={14} className="mr-2" />
+                  Copy ID
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
             <div className="space-y-[1px]">
               {category.channels?.filter((channel: any) => {
                 if (isOwner || isAdmin) return true;
@@ -152,29 +169,43 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
                       )}
                     </div>
                   </ContextMenuTrigger>
-                  {(isOwner || isAdmin) && (
-                    <ContextMenuContent className="w-48 bg-[#111214] border-[#1e1f22] text-[#B5BAC1]">
-                      <ContextMenuItem
-                        className="hover:bg-[#4752C4] hover:text-white cursor-pointer"
-                        onClick={() => onOpenServerSettings?.()}
-                      >
-                        <Settings size={14} className="mr-2" />
-                        Edit Channel
-                      </ContextMenuItem>
-                      <ContextMenuItem
-                        className="text-red-400 hover:bg-red-500 hover:text-white cursor-pointer"
-                        onClick={() => {
-                          if (confirm(`Delete #${channel.name}?`)) {
-                            fetch(`/api/servers/${server.id}/channels/${channel.id}`, { method: 'DELETE' })
-                              .then(res => res.ok && onOpenServerSettings?.()); // This should trigger a refresh via callback if possible
-                          }
-                        }}
-                      >
-                        <Trash2 size={14} className="mr-2" />
-                        Delete Channel
-                      </ContextMenuItem>
-                    </ContextMenuContent>
-                  )}
+                  <ContextMenuContent className="w-48 bg-[#111214] border-[#1e1f22] text-[#B5BAC1]">
+                    {(isOwner || isAdmin) && (
+                      <>
+                        <ContextMenuItem
+                          className="hover:bg-[#4752C4] hover:text-white cursor-pointer"
+                          onClick={() => onOpenServerSettings?.()}
+                        >
+                          <Settings size={14} className="mr-2" />
+                          Edit Channel
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          className="text-red-400 hover:bg-red-500 hover:text-white cursor-pointer"
+                          onClick={() => {
+                            if (confirm(`Delete #${channel.name}?`)) {
+                              fetch(`/api/servers/${server.id}/channels/${channel.id}`, { method: 'DELETE' })
+                                .then(res => res.ok && onOpenServerSettings?.());
+                            }
+                          }}
+                        >
+                          <Trash2 size={14} className="mr-2" />
+                          Delete Channel
+                        </ContextMenuItem>
+                        <ContextMenuSeparator className="bg-white/5" />
+                      </>
+                    )}
+                    <ContextMenuItem
+                      className="hover:bg-white/10 hover:text-white cursor-pointer"
+                      onClick={() => {
+                        navigator.clipboard.writeText(channel.id);
+                        toast.success("ID Copied");
+                      }}
+                    >
+                      <Copy size={14} className="mr-2" />
+                      Copy ID
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+
                 </ContextMenu>
               ))}
             </div>
@@ -239,6 +270,6 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };

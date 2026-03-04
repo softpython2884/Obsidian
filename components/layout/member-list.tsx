@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Shield, MessageSquare, UserMinus, Ban, Gavel, Crown, User } from 'lucide-react';
+import { Shield, MessageSquare, UserMinus, Ban, Gavel, Crown, User, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -163,6 +164,17 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
               </ContextMenuItem>
             </>
           )}
+          <ContextMenuSeparator className="bg-white/5" />
+          <ContextMenuItem
+            className="hover:bg-white/10 hover:text-white cursor-pointer"
+            onClick={() => {
+              navigator.clipboard.writeText(member.userId);
+              toast.success("ID Copied");
+            }}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            Copy ID
+          </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
     );
