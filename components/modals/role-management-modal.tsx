@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Shield, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface RoleManagementModalProps {
