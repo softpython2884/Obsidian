@@ -309,7 +309,7 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
       const response = await fetch(`/api/servers/${server.id}/members/${userId}/roles`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roleIds }),
+        body: JSON.stringify({ roleIds, modId: user?.id }),
       });
 
       if (response.ok) {
