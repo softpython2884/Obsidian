@@ -500,7 +500,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                         </div>
                       </div>
                     ) : (
-                      <div className={cn("text-white/90 text-[15px] leading-relaxed break-words markdown-content font-light tracking-wide", isCompact && "leading-relaxed")}>
+                      <div className={cn("text-white/90 text-[15px] leading-relaxed break-words markdown-content tracking-normal", isCompact && "leading-relaxed")}>
                         {msg.isForwarded && (
                           <div className="flex items-center text-xs text-white/40 mb-2 pl-2 border-l-2 border-white/10 italic">
                             <CornerUpRight size={12} className="mr-2" />

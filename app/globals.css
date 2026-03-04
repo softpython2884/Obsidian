@@ -31,7 +31,7 @@
     --input-shading: rgba(255, 255, 255, 0.05);
     --normal-text: #fbfbfb;
     --muted-text: #94949c;
-    
+
     /* CHANNEL COLORS */
     --channel-normal: #8e9297;
     --channel-muted: #4f545c;
@@ -54,22 +54,23 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .bg-glass {
     background-color: var(--background-shading);
     backdrop-filter: blur(8px);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
   }
-  
+
   .bg-card-glass {
     background-color: var(--card-shading);
     backdrop-filter: blur(4px);
   }
-  
+
   .bg-popout-glass {
     background-color: var(--popout-shading);
     backdrop-filter: blur(12px);
@@ -79,5 +80,101 @@
   .bg-input-glass {
     background-color: var(--input-shading);
     border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Markdown Content Styling */
+  .markdown-content h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+    color: white;
+  }
+
+  .markdown-content h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+    color: white;
+  }
+
+  .markdown-content h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+    color: white;
+  }
+
+  .markdown-content strong {
+    font-weight: 700;
+    color: white;
+  }
+
+  .markdown-content em {
+    font-style: italic;
+    opacity: 0.9;
+  }
+
+  .markdown-content ul {
+    list-style-type: disc;
+    margin-left: 1.25rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .markdown-content ol {
+    list-style-type: decimal;
+    margin-left: 1.25rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .markdown-content li {
+    margin-bottom: 0.125rem;
+  }
+
+  .markdown-content code {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.9em;
+  }
+
+  .markdown-content pre {
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: 0.85em;
+  }
+
+  .markdown-content blockquote {
+    border-left: 4px solid rgba(255, 255, 255, 0.1);
+    padding-left: 1rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+  }
+
+  .markdown-content a {
+    color: var(--main-color);
+    text-decoration: none;
+  }
+
+  .markdown-content a:hover {
+    text-decoration: underline;
   }
 }
