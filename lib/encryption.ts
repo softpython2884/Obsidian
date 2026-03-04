@@ -13,12 +13,15 @@ export const encrypt = (text: string): string => {
  * Decrypts a string using AES-256 with the master key.
  */
 export const decrypt = (ciphertext: string): string => {
+  if (!ciphertext || typeof ciphertext !== 'string') return '';
   try {
     const bytes = CryptoJS.AES.decrypt(ciphertext, MASTER_KEY);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    if (!decrypted) return ciphertext; // Fallback to original text if decryption returns nothing (e.g. not encrypted)
+    return decrypted;
   } catch (error) {
-    console.error('Decryption failed:', error);
-    return '[Decryption Error]';
+    console.warn('Decryption failed, returning plain text:', error);
+    return ciphertext; // Fallback to original text
   }
 };
 

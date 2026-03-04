@@ -87,11 +87,15 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
       fetch(`/api/messages?channelId=${channel.id}`)
         .then((res) => res.json())
         .then((data) => {
-          const decryptedMessages = data.map((msg: any) => ({
-            ...msg,
-            content: decrypt(msg.content)
-          }));
-          setMessages(decryptedMessages);
+          if (Array.isArray(data)) {
+            const decryptedMessages = data.map((msg: any) => ({
+              ...msg,
+              content: decrypt(msg.content)
+            }));
+            setMessages(decryptedMessages);
+          } else {
+            console.error('API returned non-array data:', data);
+          }
           setTimeout(scrollToBottom, 100);
         });
 
@@ -444,6 +448,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
         {messages.map((msg, index) => {
           const isCompact = index > 0 &&
             messages[index - 1].user.id === msg.user.id &&
+            msg.createdAt && messages[index - 1].createdAt &&
             (new Date(msg.createdAt).getTime() - new Date(messages[index - 1].createdAt).getTime()) < 300000; // 5 mins grouping
 
           return (
@@ -470,7 +475,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                     </div>
                   ) : (
                     <div className="w-10 shrink-0 text-[10px] text-white/20 opacity-0 group-hover:opacity-100 text-right self-center select-none font-mono">
-                      {format(new Date(msg.createdAt), 'HH:mm')}
+                      {msg.createdAt && !isNaN(new Date(msg.createdAt).getTime()) ? format(new Date(msg.createdAt), 'HH:mm') : ''}
                     </div>
                   )}
 
@@ -500,7 +505,9 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                             <Shield size={12} className="ml-1 text-[#ef4444]" />
                           )}
                         </span>
-                        <span className="text-[10px] text-white/30 font-mono">{format(new Date(msg.createdAt), 'HH:mm')}</span>
+                        <span className="text-[10px] text-white/30 font-mono">
+                          {msg.createdAt && !isNaN(new Date(msg.createdAt).getTime()) ? format(new Date(msg.createdAt), 'HH:mm') : ''}
+                        </span>
                       </div>
                     )}
 
