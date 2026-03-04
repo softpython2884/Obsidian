@@ -59,37 +59,94 @@ export const ServerSidebar = ({ servers, activeServer, onSelectServer, onOpenMod
 
       {/* Server List */}
       <div className="flex-1 space-y-3 overflow-y-auto w-full flex flex-col items-center no-scrollbar py-2">
-        {Array.isArray(servers) && servers.map((server) => (
-          <TooltipProvider key={server.id}>
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <div className="group relative flex items-center justify-center w-full" onClick={() => onSelectServer(server)}>
-                  <div className={cn(
-                    "absolute left-0 w-1 bg-white rounded-r-full transition-all duration-300 ease-out",
-                    activeServer?.id === server.id ? "h-8 opacity-100" : "h-4 opacity-0 group-hover:opacity-50"
-                  )} />
-                  <div className={cn(
-                    "flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-2xl transition-all duration-300 border border-transparent",
-                    activeServer?.id === server.id
-                      ? "ring-2 ring-white/10 shadow-lg shadow-black/50"
-                      : "hover:bg-white/5 hover:border-white/5"
-                  )}>
-                    {server.imageUrl ? (
-                      <img src={server.imageUrl} alt={server.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-[#1a1a1a] text-white/60 font-medium text-sm group-hover:text-white transition-colors">
-                        {server.name.charAt(0).toUpperCase()}
+        {Array.isArray(servers) && servers.map((server) => {
+          const isOwner = server.ownerId === user?.id;
+          const isAdmin = user?.role === 'ADMIN';
+
+          return (
+            <ContextMenu key={server.id}>
+              <ContextMenuTrigger>
+                <TooltipProvider>
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <div className="group relative flex items-center justify-center w-full" onClick={() => onSelectServer(server)}>
+                        <div className={cn(
+                          "absolute left-0 w-1 bg-white rounded-r-full transition-all duration-300 ease-out",
+                          activeServer?.id === server.id ? "h-8 opacity-100" : "h-4 opacity-0 group-hover:opacity-50"
+                        )} />
+                        <div className={cn(
+                          "flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-2xl transition-all duration-300 border border-transparent",
+                          activeServer?.id === server.id
+                            ? "ring-2 ring-white/10 shadow-lg shadow-black/50"
+                            : "hover:bg-white/5 hover:border-white/5"
+                        )}>
+                          {server.imageUrl ? (
+                            <img src={server.imageUrl} alt={server.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-[#1a1a1a] text-white/60 font-medium text-sm group-hover:text-white transition-colors">
+                              {server.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="bg-black text-white border-white/10 font-medium text-xs ml-2">
-                {server.name}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ))}
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="bg-black text-white border-white/10 font-medium text-xs ml-2">
+                      {server.name}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </ContextMenuTrigger>
+              <ContextMenuContent className="w-56 bg-[#111] text-white/80 border-white/10 shadow-xl rounded-xl p-1">
+                <ContextMenuItem
+                  className="cursor-pointer text-emerald-500 focus:bg-emerald-500/10 focus:text-emerald-500 rounded-lg text-xs font-medium"
+                  onClick={() => {
+                    navigator.clipboard.writeText(server.inviteCode);
+                    toast.success("Invite code copied");
+                  }}
+                >
+                  <UserPlus className="mr-2 h-3.5 w-3.5" />
+                  Invite People
+                </ContextMenuItem>
+
+                {(isOwner || isAdmin) && (
+                  <ContextMenuItem
+                    className="cursor-pointer focus:bg-white/5 focus:text-white rounded-lg text-xs font-medium"
+                    onClick={() => {
+                      onSelectServer(server);
+                      onOpenServerSettings?.();
+                    }}
+                  >
+                    <Settings className="mr-2 h-3.5 w-3.5" />
+                    Server Settings
+                  </ContextMenuItem>
+                )}
+
+                <ContextMenuSeparator className="bg-white/5" />
+
+                {!isOwner && (
+                  <ContextMenuItem
+                    className="cursor-pointer text-red-500 focus:bg-red-500/10 focus:text-red-500 rounded-lg text-xs font-medium"
+                    onClick={() => onLeaveServer?.(server.id)}
+                  >
+                    <LogOut className="mr-2 h-3.5 w-3.5" />
+                    Leave Server
+                  </ContextMenuItem>
+                )}
+
+                <ContextMenuItem
+                  className="cursor-pointer text-white/40 focus:bg-white/5 focus:text-white rounded-lg text-[10px] font-medium"
+                  onClick={() => {
+                    navigator.clipboard.writeText(server.id);
+                    toast.success("Server ID copied");
+                  }}
+                >
+                  <Copy className="mr-2 h-3 w-3" />
+                  Copy ID
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
+          );
+        })}
       </div>
 
       {/* Add Server Button */}

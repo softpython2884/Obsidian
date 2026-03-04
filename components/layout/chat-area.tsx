@@ -33,7 +33,7 @@ import {
 import { GifPicker } from '@/components/pickers/gif-picker';
 import { EmbedCreatorModal } from '@/components/modals/embed-creator-modal';
 import { ForwardMessageModal } from '@/components/modals/forward-message-modal';
-import { processCommand } from '@/lib/commands'; // Import command processor
+import { processCommand, commands } from '@/lib/commands'; // Import commands
 
 interface ChatAreaProps {
   channel: any;
@@ -57,6 +57,10 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
 
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredCommands, setFilteredCommands] = useState<any[]>([]);
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -290,7 +294,23 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
 };
 
 const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
-  setInputValue(e.target.value);
+  const val = e.target.value;
+  setInputValue(val);
+
+  if (val.startsWith('/')) {
+    const search = val.slice(1).toLowerCase();
+    const filtered = commands.filter(c => c.name.toLowerCase().startsWith(search));
+    if (filtered.length > 0) {
+      setFilteredCommands(filtered);
+      setShowSuggestions(true);
+      setSuggestionIndex(0);
+    } else {
+      setShowSuggestions(false);
+    }
+  } else {
+    setShowSuggestions(false);
+  }
+
   if (!isTyping && socket && user) {
     setIsTyping(true);
     socket.emit('typing', { channelId: channel.id, pseudo: user.pseudo, isTyping: true });
@@ -299,6 +319,11 @@ const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
       socket.emit('typing', { channelId: channel.id, pseudo: user.pseudo, isTyping: false });
     }, 3000);
   }
+};
+
+const selectSuggestion = (cmd: any) => {
+  setInputValue(`/${cmd.name} `);
+  setShowSuggestions(false);
 };
 
 const handleEditMessage = (msg: any) => {
@@ -644,7 +669,48 @@ return (
     </div>
 
     {/* Input Area - Floating & Clean */}
-    <div className="shrink-0 px-6 pb-6 pt-2 bg-transparent">
+    <div className="shrink-0 px-6 pb-6 pt-2 bg-transparent relative">
+      {/* Command Suggestions */}
+      {showSuggestions && (
+        <div className="absolute bottom-[calc(100%-8px)] left-6 right-6 bg-[#1e1f22] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="p-2 border-b border-white/5 bg-black/20">
+            <span className="text-[10px] font-bold uppercase text-white/40 tracking-widest pl-2">Available Commands</span>
+          </div>
+          <div className="max-h-60 overflow-y-auto no-scrollbar">
+            {filteredCommands.map((cmd, index) => (
+              <div
+                key={cmd.name}
+                className={cn(
+                  "px-4 py-3 flex items-center justify-between cursor-pointer transition-colors",
+                  index === suggestionIndex ? "bg-[#5865f2] text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                )}
+                onClick={() => selectSuggestion(cmd)}
+                onMouseEnter={() => setSuggestionIndex(index)}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={cn(
+                    "h-6 w-6 rounded-md flex items-center justify-center font-bold text-xs shrink-0",
+                    index === suggestionIndex ? "bg-white/20" : "bg-white/5"
+                  )}>
+                    /
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold">{cmd.name}</span>
+                    <span className={cn(
+                      "text-[10px] opacity-60",
+                      index === suggestionIndex ? "text-white" : "text-white/40"
+                    )}>{cmd.description}</span>
+                  </div>
+                </div>
+                {index === suggestionIndex && (
+                  <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded text-white/60">TAB</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mb-2 h-4 text-[10px] text-white/30 px-2 font-mono flex justify-between">
         <span>
           {typingUsers.length > 0 && (
@@ -671,7 +737,24 @@ return (
           <input
             value={inputValue}
             onChange={handleTyping}
-            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+            onKeyDown={(e) => {
+              if (showSuggestions) {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setSuggestionIndex((prev) => (prev + 1) % filteredCommands.length);
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setSuggestionIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                  e.preventDefault();
+                  selectSuggestion(filteredCommands[suggestionIndex]);
+                } else if (e.key === 'Escape') {
+                  setShowSuggestions(false);
+                }
+              } else if (e.key === 'Enter') {
+                handleSendMessage();
+              }
+            }}
             placeholder={`Message #${channelName}`}
             className="w-full bg-transparent text-white text-[15px] outline-none placeholder:text-white/20 text-center"
             autoComplete="off"
