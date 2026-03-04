@@ -48,7 +48,8 @@ export const DiscordLayout = () => {
           const data = await res.json();
           if (Array.isArray(data)) {
             setServers(data);
-            if (data.length > 0) {
+            // Only set a default server if neither a server nor a DM channel is currently active
+            if (data.length > 0 && !activeServer && !activeChannel) {
               setActiveServer(data[0]);
               if (data[0].categories?.[0]?.channels?.[0]) {
                 setActiveChannel(data[0].categories[0].channels[0]);

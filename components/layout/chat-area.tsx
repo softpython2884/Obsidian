@@ -9,6 +9,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -144,7 +146,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
           content: '',
           channelId: channel.id,
           isEmbed: true,
-          embedData: JSON.stringify(embedData),
+          embedData: embedData,
         }),
       });
       if (response.ok) {
@@ -441,8 +443,8 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
               <ContextMenuTrigger>
                 <div
                   className={cn(
-                    "group flex items-start space-x-4 relative transition-colors duration-200 rounded-lg -mx-4 px-4 py-1 hover:bg-white/[0.02]",
-                    isCompact ? "mt-0" : "mt-2"
+                    "group flex items-start space-x-4 relative transition-colors duration-200 rounded-lg -mx-4 px-4 py-0.5 hover:bg-white/[0.02]",
+                    isCompact ? "mt-0" : "mt-1"
                   )}
                 >
                   {!isCompact ? (
@@ -506,7 +508,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                           </div>
                         )}
 
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{msg.content}</ReactMarkdown>
                         {msg.updatedAt !== msg.createdAt && <span className="text-[10px] text-white/30 ml-1 select-none">(edited)</span>}
 
                         {msg.isEmbed && msg.embedData && (() => {
@@ -517,7 +519,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                                 <div className="h-1 w-full" style={{ backgroundColor: embed.color || '#5865F2' }} />
                                 <div className="p-4">
                                   {embed.title && <h4 className="font-bold text-white mb-2">{embed.title}</h4>}
-                                  {embed.description && <div className="text-sm text-white/70 whitespace-pre-wrap leading-relaxed"><ReactMarkdown>{embed.description}</ReactMarkdown></div>}
+                                  {embed.description && <div className="text-sm text-white/70 whitespace-pre-wrap leading-relaxed"><ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{embed.description}</ReactMarkdown></div>}
                                   {embed.image?.url && <img src={embed.image.url} alt="Embed" className="mt-3 rounded-lg max-h-60 object-cover w-full" />}
                                   {embed.footer?.text && <div className="text-[10px] text-white/30 mt-3 pt-3 border-t border-white/5">{embed.footer.text}</div>}
                                 </div>
@@ -633,7 +635,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
             /help for commands
           </span>
         </div>
-        <div className="relative flex items-center rounded-2xl bg-[#383A40] p-2 shadow-sm transition-all focus-within:ring-1 focus-within:ring-white/5">
+        <div className="relative flex items-center rounded-2xl bg-input-glass backdrop-blur-md p-2 shadow-sm transition-all focus-within:ring-1 focus-within:ring-white/5 border border-white/5">
           <div className="flex items-center pl-2 space-x-2">
             <button
               className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors"
