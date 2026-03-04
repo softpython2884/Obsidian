@@ -38,6 +38,10 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
     );
   }
 
+  const isOwner = server.ownerId === user?.id;
+  const member = server.members?.find((m: any) => m.userId === user?.id);
+  const isAdmin = member?.roles?.some((r: any) => r.permissions === 'ADMIN') || user?.role === 'ADMIN';
+
   return (
     <div className="flex w-64 flex-col bg-glass h-full font-sans">
       {/* Server Header */}
@@ -101,11 +105,6 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
             </div>
             <div className="space-y-[1px]">
               {category.channels?.filter((channel: any) => {
-                // Server owner and Admins see all channels
-                const isOwner = server.ownerId === user?.id;
-                const member = server.members?.find((m: any) => m.userId === user?.id);
-                const isAdmin = member?.roles?.some((r: any) => r.permissions === 'ADMIN') || user?.role === 'ADMIN';
-
                 if (isOwner || isAdmin) return true;
                 if (!channel.isPrivate) return true;
 
