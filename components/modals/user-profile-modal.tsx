@@ -19,18 +19,19 @@ export const UserProfileModal = ({ isOpen, onClose, user, onStartDM }: UserProfi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
-        className="bg-[#111214] p-0 overflow-hidden border-none w-[600px] max-w-full text-[#DBDEE1]"
+      <DialogContent
+        className="bg-[#111214] p-0 overflow-hidden border-none w-[340px] max-w-full text-[#DBDEE1] rounded-xl shadow-2xl"
         aria-describedby="user-profile-description"
       >
         <DialogTitle className="sr-only">User Profile: {user.pseudo}</DialogTitle>
         <DialogDescription id="user-profile-description" className="sr-only">
-          Profile details for {user.pseudo}, including bio, roles, and social links.
+          Profile details for {user.pseudo}
         </DialogDescription>
-        {/* Banner */}
-        <div 
-          className="h-[210px] w-full relative"
-          style={{ 
+
+        {/* Banner - More compact */}
+        <div
+          className="h-[60px] w-full relative"
+          style={{
             backgroundColor: user.accentColor || '#5865F2',
             backgroundImage: user.bannerUrl ? `url(${user.bannerUrl})` : undefined,
             backgroundSize: 'cover',
@@ -38,105 +39,113 @@ export const UserProfileModal = ({ isOpen, onClose, user, onStartDM }: UserProfi
           }}
         />
 
-        {/* Avatar */}
-        <div className="absolute top-[160px] left-[20px]">
-          <div className="h-[92px] w-[92px] rounded-full bg-[#111214] p-[6px]">
-            <div className="h-full w-full rounded-full overflow-hidden bg-[#5865F2]">
+        {/* Avatar - Smaller and overlapping banner */}
+        <div className="absolute top-[28px] left-[16px]">
+          <div className="h-[80px] w-[80px] rounded-full bg-[#111214] p-[6px]">
+            <div className="h-full w-full rounded-full overflow-hidden bg-[#313338] relative">
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.pseudo} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-white">
+                <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-white/50 bg-[#5865F2]">
                   {user.pseudo?.charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
             <div className={cn(
-              "absolute bottom-[6px] right-[6px] h-6 w-6 rounded-full border-[4px] border-[#111214]",
-              user.state === 'ONLINE' ? "bg-[#23A559]" : 
-              user.state === 'IDLE' ? "bg-[#F0B232]" : 
-              user.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
+              "absolute bottom-[2px] right-[2px] h-[22px] w-[22px] rounded-full border-[4px] border-[#111214]",
+              user.state === 'ONLINE' ? "bg-[#23A559]" :
+                user.state === 'IDLE' ? "bg-[#F0B232]" :
+                  user.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
             )} />
           </div>
         </div>
 
-        {/* Content */}
-        <div className="mt-[50px] px-4 pb-4 bg-[#111214]">
-          {/* Header */}
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-2xl font-bold text-white flex items-center">
-                {user.pseudo}
-                {user.role === 'ADMIN' && <Shield size={20} className="ml-2 text-[#F04747]" />}
-              </h2>
-              <p className="text-[#B5BAC1] text-sm">{user.id}</p>
+        {/* Content - Compact layout */}
+        <div className="mt-[54px] px-4 pb-4">
+          <div className="bg-[#1e1f22] rounded-lg p-3 border border-white/[0.02]">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center">
+                  {user.pseudo}
+                  {user.role === 'ADMIN' && <Shield size={16} className="ml-1.5 text-[#F04747]" />}
+                </h2>
+                <p className="text-[#B5BAC1] text-xs font-medium">{user.pseudo?.toLowerCase()}</p>
+              </div>
+              {onStartDM && (
+                <button
+                  className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/60 hover:text-white"
+                  onClick={() => {
+                    onStartDM(user.id);
+                    onClose();
+                  }}
+                  title="Message"
+                >
+                  <MessageSquare size={18} />
+                </button>
+              )}
             </div>
-            <button 
-              className="bg-[#248046] hover:bg-[#1A6334] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
-              onClick={() => {
-                if (onStartDM) {
-                  onStartDM(user.id);
-                  onClose();
-                } else {
-                  alert('Feature coming soon!');
-                }
-              }}
-            >
-              Send Message
-            </button>
-          </div>
 
-          <div className="mt-4 p-3 bg-[#1E1F22] rounded-lg border border-[#2B2D31]">
-             {/* Status */}
-             {user.status && (
-              <div className="mb-4">
-                <p className="text-[#DBDEE1] text-sm">{user.status}</p>
+            <div className="w-full h-[1px] bg-white/[0.05] my-3" />
+
+            {/* Status */}
+            {user.status && (
+              <div className="mb-3">
+                <h3 className="text-[10px] font-bold uppercase text-[#B5BAC1] mb-1 tracking-wider">Status</h3>
+                <p className="text-[#DBDEE1] text-xs">{user.status}</p>
               </div>
             )}
 
-            <div className="w-full h-[1px] bg-[#3F4147] my-3" />
-
             {/* Bio */}
-            <div className="mb-4">
-              <h3 className="text-xs font-bold uppercase text-[#B5BAC1] mb-2">About Me</h3>
-              <p className="text-[#DBDEE1] text-sm whitespace-pre-wrap">
-                {user.bio || "This user hasn't written a bio yet."}
+            <div className="mb-3">
+              <h3 className="text-[10px] font-bold uppercase text-[#B5BAC1] mb-1 tracking-wider">About Me</h3>
+              <p className="text-[#DBDEE1] text-xs whitespace-pre-wrap leading-relaxed">
+                {user.bio || "No bio yet."}
               </p>
             </div>
 
             {/* Member Since */}
-            <div className="mb-4">
-              <h3 className="text-xs font-bold uppercase text-[#B5BAC1] mb-2">Member Since</h3>
-              <p className="text-[#DBDEE1] text-sm">
-                {new Date(user.createdAt).toLocaleDateString()}
+            <div className="mb-3">
+              <h3 className="text-[10px] font-bold uppercase text-[#B5BAC1] mb-1 tracking-wider">Member Since</h3>
+              <p className="text-[#DBDEE1] text-[11px]">
+                {new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
 
             {/* Social Links */}
             {(socialLinks.github || socialLinks.youtube || socialLinks.website) && (
               <div>
-                <h3 className="text-xs font-bold uppercase text-[#B5BAC1] mb-2">Connections</h3>
-                <div className="flex flex-wrap gap-2">
+                <h3 className="text-[10px] font-bold uppercase text-[#B5BAC1] mb-1 tracking-wider">Connections</h3>
+                <div className="flex flex-wrap gap-1.5 mt-1">
                   {socialLinks.github && (
-                    <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 bg-[#2B2D31] hover:bg-[#35373C] px-3 py-2 rounded border border-[#1E1F22] text-sm text-[#DBDEE1] transition-colors">
+                    <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-[#2B2D31] hover:bg-[#35373C] rounded transition-colors text-[#DBDEE1]">
                       <Github size={16} />
-                      <span>GitHub</span>
                     </a>
                   )}
                   {socialLinks.youtube && (
-                    <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 bg-[#2B2D31] hover:bg-[#35373C] px-3 py-2 rounded border border-[#1E1F22] text-sm text-[#DBDEE1] transition-colors">
-                      <Youtube size={16} className="text-[#FF0000]" />
-                      <span>YouTube</span>
+                    <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-[#2B2D31] hover:bg-[#35373C] rounded transition-colors text-[#FF0000]">
+                      <Youtube size={16} />
                     </a>
                   )}
                   {socialLinks.website && (
-                    <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 bg-[#2B2D31] hover:bg-[#35373C] px-3 py-2 rounded border border-[#1E1F22] text-sm text-[#DBDEE1] transition-colors">
-                      <Globe size={16} className="text-[#3BA55C]" />
-                      <span>Website</span>
+                    <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-[#2B2D31] hover:bg-[#35373C] rounded transition-colors text-[#3BA55C]">
+                      <Globe size={16} />
                     </a>
                   )}
                 </div>
               </div>
             )}
+
+            <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-between">
+              <span className="text-[9px] text-white/20 font-mono">ID: {user.id}</span>
+              <button
+                className="text-[10px] text-[#5865F2] hover:underline"
+                onClick={() => {
+                  navigator.clipboard.writeText(user.id);
+                }}
+              >
+                Copy ID
+              </button>
+            </div>
           </div>
         </div>
       </DialogContent>

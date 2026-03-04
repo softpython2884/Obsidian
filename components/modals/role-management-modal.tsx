@@ -51,7 +51,7 @@ export const RoleManagementModal = ({ isOpen, onClose, user, member, serverRoles
 
         <ScrollArea className="max-h-[300px] mt-4 pr-4">
           <div className="space-y-1">
-            {serverRoles.sort((a, b) => b.position - a.position).map((role) => (
+            {[...serverRoles].sort((a, b) => b.position - a.position).map((role) => (
               <div
                 key={role.id}
                 className={cn(

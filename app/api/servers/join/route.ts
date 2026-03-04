@@ -1,5 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { encrypt } from '@/lib/encryption';
+
+const WELCOME_MESSAGES = [
+  "Plop ! {user} vient d'arriver !",
+  "Hé regardez ! {user} a rejoint la fête !",
+  "Bienvenue {user}, on t'attendait !",
+  "{user} a atterri sur le serveur !",
+  "Un sauvage {user} apparaît !",
+];
 
 export async function POST(req: Request) {
   try {
@@ -56,13 +65,50 @@ export async function POST(req: Request) {
     }
 
     // Add user to server
-    await prisma.serverMember.create({
+    const member = await prisma.serverMember.create({
       data: {
         userId,
         serverId: server.id,
         role: 'MEMBER',
       },
+      include: {
+        user: true,
+      }
     });
+
+    // Send welcome message
+    try {
+      let targetChannelId = server.systemChannelId;
+
+      // If no system channel set, find the first text channel
+      if (!targetChannelId) {
+        const firstChannel = await prisma.channel.findFirst({
+          where: {
+            serverId: server.id,
+            type: 'TEXT',
+          },
+          orderBy: {
+            name: 'asc'
+          }
+        });
+        targetChannelId = firstChannel?.id;
+      }
+
+      if (targetChannelId) {
+        const randomMsg = WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)];
+        const content = randomMsg.replace('{user}', `<@${userId}>`);
+
+        await prisma.message.create({
+          data: {
+            content: encrypt(content),
+            userId: 'marcus-system-bot',
+            channelId: targetChannelId,
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Failed to send welcome message:', e);
+    }
 
     return NextResponse.json(server);
   } catch (error) {
