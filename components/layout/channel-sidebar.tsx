@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus, LogOut, Trash2, Volume2 } from 'lucide-react';
+import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus, LogOut, Trash2, Volume2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
@@ -100,7 +100,20 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
               {category.name}
             </div>
             <div className="space-y-[1px]">
-              {category.channels?.map((channel: any) => (
+              {category.channels?.filter((channel: any) => {
+                // Server owner and Admins see all channels
+                const isOwner = server.ownerId === user?.id;
+                const member = server.members?.find((m: any) => m.userId === user?.id);
+                const isAdmin = member?.roles?.some((r: any) => r.permissions === 'ADMIN') || user?.role === 'ADMIN';
+
+                if (isOwner || isAdmin) return true;
+                if (!channel.isPrivate) return true;
+
+                // For private channels, check if user has an allowed role
+                return channel.allowedRoles?.some((allowedRole: any) =>
+                  member?.roles?.some((memberRole: any) => memberRole.id === allowedRole.id)
+                );
+              }).map((channel: any) => (
                 <div
                   key={channel.id}
                   onClick={() => onSelectChannel(channel)}
@@ -111,9 +124,17 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
                       : "text-white/40 hover:bg-white/5 hover:text-white/80"
                   )}
                 >
-                  <Hash size={16} className={cn("mr-2", activeChannel?.id === channel.id ? "text-white/60" : "text-white/20 group-hover:text-white/40")} />
+                  {channel.isPrivate ? (
+                    <Lock size={14} className={cn("mr-2", activeChannel?.id === channel.id ? "text-[#F0B232]" : "text-[#F0B232]/40 group-hover:text-[#F0B232]/60")} />
+                  ) : (
+                    channel.type === 'VOICE' ? (
+                      <Volume2 size={16} className={cn("mr-2", activeChannel?.id === channel.id ? "text-white/60" : "text-white/20 group-hover:text-white/40")} />
+                    ) : (
+                      <Hash size={16} className={cn("mr-2", activeChannel?.id === channel.id ? "text-white/60" : "text-white/20 group-hover:text-white/40")} />
+                    )
+                  )}
                   <span className={cn("truncate text-sm font-medium", activeChannel?.id === channel.id ? "text-white" : "text-white/60 group-hover:text-white/90")}>{channel.name}</span>
-                  {activeChannel?.id !== channel.id && (
+                  {((server.ownerId === user?.id || isAdmin) && activeChannel?.id !== channel.id) && (
                     <Settings size={12} className="ml-auto hidden text-white/20 group-hover:block hover:text-white" />
                   )}
                 </div>

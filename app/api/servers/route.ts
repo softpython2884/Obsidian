@@ -112,7 +112,11 @@ export async function GET(req: Request) {
       include: {
         categories: {
           include: {
-            channels: true
+            channels: {
+              include: {
+                allowedRoles: true,
+              }
+            }
           }
         },
         roles: true

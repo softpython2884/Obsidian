@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, Shield, Hash, Volume2, UserX, Ban, Save } from "lucide-react";
+import { Trash2, Plus, Shield, Hash, Volume2, UserX, Ban, Save, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 
@@ -34,6 +35,7 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
 
   // Channels State
   const [categories, setCategories] = useState<any[]>([]);
+  const [editingChannel, setEditingChannel] = useState<any>(null);
 
   // Members State
   const [members, setMembers] = useState<any[]>([]);
@@ -163,7 +165,110 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
     }
   };
 
-  // Member Handlers
+  const handleCreateCategory = async (name: string) => {
+    try {
+      const res = await fetch(`/api/servers/${server.id}/categories`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        fetchChannels();
+        toast.success("Category created");
+      }
+    } catch (error) {
+      toast.error("Failed to create category");
+    }
+  };
+
+  const handleUpdateCategory = async (categoryId: string, name: string) => {
+    try {
+      const res = await fetch(`/api/servers/${server.id}/categories/${categoryId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        fetchChannels();
+        toast.success("Category updated");
+      }
+    } catch (error) {
+      toast.error("Failed to update category");
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (confirm("Delete this category and all its channels?")) {
+      try {
+        const res = await fetch(`/api/servers/${server.id}/categories/${categoryId}`, { method: "DELETE" });
+        if (res.ok) {
+          fetchChannels();
+          toast.success("Category deleted");
+        }
+      } catch (error) {
+        toast.error("Failed to delete category");
+      }
+    }
+  };
+
+  const handleCreateChannel = async (categoryId: string) => {
+    const name = prompt("Enter channel name:");
+    if (!name) return;
+    try {
+      const res = await fetch(`/api/servers/${server.id}/channels`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.toLowerCase().replace(/\s+/g, '-'),
+          type: "TEXT",
+          categoryId
+        }),
+      });
+      if (res.ok) {
+        fetchChannels();
+        toast.success("Channel created");
+      }
+    } catch (error) {
+      toast.error("Failed to create channel");
+    }
+  };
+
+  const handleUpdateChannel = async (channel: any) => {
+    try {
+      const res = await fetch(`/api/servers/${server.id}/channels/${channel.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: channel.name,
+          type: channel.type,
+          isPrivate: channel.isPrivate,
+          roleIds: channel.allowedRoles?.map((r: any) => r.id) || []
+        }),
+      });
+      if (res.ok) {
+        fetchChannels();
+        setEditingChannel(null);
+        toast.success("Channel updated");
+      }
+    } catch (error) {
+      toast.error("Failed to update channel");
+    }
+  };
+
+  const handleDeleteChannel = async (channelId: string) => {
+    if (confirm("Delete this channel?")) {
+      try {
+        const res = await fetch(`/api/servers/${server.id}/channels/${channelId}`, { method: "DELETE" });
+        if (res.ok) {
+          fetchChannels();
+          setEditingChannel(null);
+          toast.success("Channel deleted");
+        }
+      } catch (error) {
+        toast.error("Failed to delete channel");
+      }
+    }
+  };
   const handleKickMember = async (memberId: string) => {
     if (confirm("Kick this member?")) {
       try {
@@ -350,9 +455,171 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
               </div>
             </TabsContent>
 
-            <TabsContent value="channels" className="mt-0">
-              <h2 className="text-xl font-bold mb-4">Channels</h2>
-              <div className="text-[#949BA4]">Channel management coming soon...</div>
+            <TabsContent value="channels" className="mt-0 h-full flex flex-col">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Channels</h2>
+                <Button onClick={() => {
+                  const name = prompt("Enter category name:");
+                  if (name) handleCreateCategory(name);
+                }} size="sm" variant="outline" className="border-[#4E5058] text-white hover:bg-[#35373C]">
+                  Create Category
+                </Button>
+              </div>
+              <ScrollArea className="flex-1 pr-4">
+                <div className="space-y-6 pb-6">
+                  {categories.map((category) => (
+                    <div key={category.id} className="bg-[#2B2D31] rounded-lg overflow-hidden border border-white/5">
+                      <div className="p-3 bg-[#232428] flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-[#949BA4] hover:text-white"
+                            onClick={() => {
+                              const name = prompt("Edit category name:", category.name);
+                              if (name && name !== category.name) handleUpdateCategory(category.id, name);
+                            }}
+                          >
+                            <Plus className="rotate-45 h-3 w-3" />
+                          </Button>
+                          <span className="text-xs font-bold uppercase text-[#949BA4]">{category.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-[#949BA4] hover:text-white"
+                            onClick={() => handleCreateChannel(category.id)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-[#F23F43] hover:bg-[#F23F43]/10"
+                            onClick={() => handleDeleteCategory(category.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="divide-y divide-white/5">
+                        {category.channels?.map((channel: any) => (
+                          <div
+                            key={channel.id}
+                            className="p-3 flex items-center justify-between hover:bg-[#35373C] transition-colors group"
+                            onClick={() => setEditingChannel(channel)}
+                          >
+                            <div className="flex items-center space-x-3">
+                              {channel.isPrivate ? <Lock size={16} className="text-[#F0B232]" /> : (channel.type === 'VOICE' ? <Volume2 size={16} className="text-[#949BA4]" /> : <Hash size={16} className="text-[#949BA4]" />)}
+                              <span className="font-medium text-sm">{channel.name}</span>
+                              {channel.isPrivate && (
+                                <span className="text-[10px] bg-[#F0B232]/10 text-[#F0B232] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Private</span>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-[#949BA4] group-hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Shield size={16} />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+
+              {/* Channel Edit Modal/Overlay */}
+              {editingChannel && (
+                <div className="fixed inset-0 z-50 bg-[#313338] p-8 flex flex-col">
+                  <div className="max-w-3xl mx-auto w-full flex-1 flex flex-col">
+                    <div className="flex justify-between items-center mb-8">
+                      <div>
+                        <h2 className="text-xl font-bold flex items-center">
+                          {editingChannel.type === 'VOICE' ? <Volume2 className="mr-2" /> : <Hash className="mr-2" />}
+                          {editingChannel.name} Settings
+                        </h2>
+                        <p className="text-sm text-[#949BA4]">Configure channel basic information and permissions.</p>
+                      </div>
+                      <Button variant="ghost" className="text-white hover:bg-white/5" onClick={() => setEditingChannel(null)}>Done</Button>
+                    </div>
+
+                    <ScrollArea className="flex-1 pr-4">
+                      <div className="space-y-8 pb-8">
+                        <section className="space-y-4">
+                          <Label className="uppercase text-xs font-bold text-[#B5BAC1]">Channel Name</Label>
+                          <Input
+                            value={editingChannel.name}
+                            onChange={(e) => setEditingChannel({ ...editingChannel, name: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                            className="bg-[#1E1F22] border-none h-11 text-white"
+                          />
+                        </section>
+
+                        <section className="space-y-4 pt-6 border-t border-white/5">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label className="text-base font-bold text-white mb-1">Private Channel</Label>
+                              <p className="text-sm text-[#949BA4]">Only selected roles and members will be able to view this channel.</p>
+                            </div>
+                            <Switch
+                              checked={editingChannel.isPrivate}
+                              onCheckedChange={(checked) => setEditingChannel({ ...editingChannel, isPrivate: checked })}
+                            />
+                          </div>
+
+                          {editingChannel.isPrivate && (
+                            <div className="mt-4 bg-[#2B2D31] rounded-lg p-4 space-y-4 animate-in fade-in slide-in-from-top-2">
+                              <Label className="uppercase text-xs font-bold text-[#B5BAC1]">Who can access this channel?</Label>
+                              <div className="space-y-2">
+                                {roles.map(role => (
+                                  <div key={role.id} className="flex items-center justify-between p-2 rounded hover:bg-[#35373C]">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: role.color }} />
+                                      <span className="text-sm">{role.name}</span>
+                                    </div>
+                                    <Checkbox
+                                      checked={editingChannel.allowedRoles?.some((r: any) => r.id === role.id)}
+                                      onCheckedChange={(checked) => {
+                                        const roleIds = editingChannel.allowedRoles?.map((r: any) => r.id) || [];
+                                        const newIds = checked
+                                          ? [...roleIds, role.id]
+                                          : roleIds.filter((id: string) => id !== role.id);
+                                        setEditingChannel({
+                                          ...editingChannel,
+                                          allowedRoles: roles.filter(r => newIds.includes(r.id))
+                                        });
+                                      }}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </section>
+                      </div>
+                    </ScrollArea>
+
+                    <div className="flex justify-between pt-6 border-t border-white/5">
+                      <Button
+                        variant="ghost"
+                        className="text-[#F23F43] hover:bg-[#F23F43]/10"
+                        onClick={() => handleDeleteChannel(editingChannel.id)}
+                      >
+                        Delete Channel
+                      </Button>
+                      <Button
+                        onClick={() => handleUpdateChannel(editingChannel)}
+                        className="bg-[#23A559] hover:bg-[#23A559]/80 text-white min-w-[120px]"
+                      >
+                        Save Changes
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="members" className="mt-0">

@@ -37,32 +37,33 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
     }
   }, [server]);
 
-  const handleUpdateRole = async (userId: string, role: string) => {
+  const handleUpdateRoles = async (userId: string, roleIds: string[]) => {
     try {
-      const response = await fetch(`/api/servers/${server.id}/members/${userId}/role`, {
+      const response = await fetch(`/api/servers/${server.id}/members/${userId}/roles`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
+        body: JSON.stringify({ roleIds }),
       });
 
       if (response.ok) {
+        const updatedMember = await response.json();
         setMembers((prev) => prev.map((m) =>
-          m.id === userId ? { ...m, role } : m
+          m.user.id === userId ? updatedMember : m
         ));
       } else {
-        alert('Failed to update role');
+        alert('Failed to update roles');
       }
     } catch (error) {
-      console.error('Error updating role:', error);
-      alert('Failed to update role');
+      console.error('Error updating roles:', error);
+      alert('Failed to update roles');
     }
   };
 
   if (!server) return <div className="hidden w-60 flex-col bg-black/60 backdrop-blur-sm lg:flex" />;
 
-  const admins = members.filter((m) => (m.role === 'ADMIN' || m.userId === server.ownerId) && m.user);
-  const moderators = members.filter((m) => m.role === 'MODERATOR' && m.userId !== server.ownerId && m.user);
-  const onlineMembers = members.filter((m) => (m.role === 'MEMBER' || !m.role) && m.userId !== server.ownerId && m.user?.state !== 'OFFLINE' && m.user?.state !== 'INVISIBLE');
+  const admins = members.filter((m) => (m.roles?.some((r: any) => r.permissions === 'ADMIN') || m.userId === server.ownerId) && m.user);
+  const moderators = members.filter((m) => m.roles?.some((r: any) => r.permissions === 'MODERATOR') && m.userId !== server.ownerId && m.user);
+  const onlineMembers = members.filter((m) => (!m.roles?.some((r: any) => r.permissions === 'ADMIN' || r.permissions === 'MODERATOR')) && m.userId !== server.ownerId && m.user?.state !== 'OFFLINE' && m.user?.state !== 'INVISIBLE');
   const offlineMembers = members.filter((m) => (m.user?.state === 'OFFLINE' || m.user?.state === 'INVISIBLE') && m.user);
 
   const handleAction = (action: string, member: any) => {
@@ -71,6 +72,14 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
 
   const MemberItem = ({ member }: { member: any }) => {
     if (!member.user) return null;
+
+    // Get the highest role color
+    const roleColor = member.userId === server.ownerId
+      ? '#F04747'
+      : (member.roles && member.roles.length > 0)
+        ? [...member.roles].sort((a, b) => b.position - a.position)[0].color
+        : '#949BA4';
+
     return (
       <ContextMenu>
         <ContextMenuTrigger>
@@ -91,10 +100,10 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
               )} />
             </div>
             <div className="ml-2 flex flex-col overflow-hidden">
-              <span className="truncate text-sm font-bold leading-tight flex items-center" style={{ color: (member.role === 'ADMIN' || member.userId === server.ownerId) ? '#F04747' : member.role === 'MODERATOR' ? '#FAA61A' : '#949BA4' }}>
+              <span className="truncate text-sm font-bold leading-tight flex items-center" style={{ color: roleColor }}>
                 {member.user.pseudo}
                 {server.ownerId === member.userId && <Crown size={12} className="ml-1 text-[#F0B232]" fill="#F0B232" />}
-                {member.role === 'ADMIN' && server.ownerId !== member.userId && <Shield size={12} className="ml-1 text-[#F04747]" />}
+                {member.roles?.some((r: any) => r.permissions === 'ADMIN') && server.ownerId !== member.userId && <Shield size={12} className="ml-1 text-[#F04747]" />}
               </span>
               {member.user.status && (
                 <span className="truncate text-[10px] text-[#B5BAC1] opacity-60 leading-tight">{member.user.status}</span>
@@ -193,8 +202,10 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
       <RoleManagementModal
         isOpen={isRoleModalOpen}
         onClose={() => setIsRoleModalOpen(false)}
-        user={selectedMember}
-        onUpdateRole={handleUpdateRole}
+        user={selectedMember?.user}
+        member={selectedMember}
+        serverRoles={server.roles || []}
+        onUpdateRoles={handleUpdateRoles}
       />
     </>
   );

@@ -82,6 +82,7 @@ model Role {
   serverId    String
   server      Server    @relation(fields: [serverId], references: [id], onDelete: Cascade)
   members     ServerMember[]
+  allowedChannels Channel[] @relation("ChannelRoles")
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -119,6 +120,8 @@ model Channel {
   category    Category? @relation(fields: [categoryId], references: [id])
   messages    Message[]
   members     User[]    @relation("ChannelMembers")
+  allowedRoles Role[]   @relation("ChannelRoles")
+  isPrivate    Boolean  @default(false)
 }
 
 model Message {

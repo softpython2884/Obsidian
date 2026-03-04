@@ -6,7 +6,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ serverId
     const { serverId } = await params;
     const members = await prisma.serverMember.findMany({
       where: { serverId: serverId },
-      include: { user: true },
+      include: {
+        user: true,
+        roles: true,
+      },
     });
     return NextResponse.json(members);
   } catch (error) {
