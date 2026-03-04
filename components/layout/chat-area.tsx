@@ -485,7 +485,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                           className="font-medium text-white text-sm hover:underline cursor-pointer flex items-center"
                           style={{
                             color: (() => {
-                              const member = msg.user?.serverMembers?.[0];
+                              const member = msg.user?.servers?.[0];
                               if (member?.roles?.length > 0) {
                                 return [...member.roles].sort((a, b) => b.position - a.position)[0].color;
                               }
@@ -500,7 +500,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                               BOT
                             </span>
                           )}
-                          {(msg.user?.role === 'ADMIN' || msg.user?.serverMembers?.[0]?.roles?.some((r: any) => r.permissions === 'ADMIN')) && (
+                          {(msg.user?.role === 'ADMIN' || msg.user?.servers?.[0]?.roles?.some((r: any) => r.permissions === 'ADMIN')) && (
                             <Shield size={12} className="ml-1 text-[#ef4444]" />
                           )}
                         </span>

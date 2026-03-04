@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       include: {
         user: {
           include: {
-            serverMembers: serverId
+            servers: serverId
               ? { where: { serverId }, include: { roles: true } }
               : { where: { id: 'none' }, include: { roles: true } } // empty result for DMs
           }
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
       include: {
         user: {
           include: {
-            serverMembers: serverId
+            servers: serverId
               ? { where: { serverId }, include: { roles: true } }
               : { where: { id: 'none' }, include: { roles: true } } // empty result for DMs
           }
