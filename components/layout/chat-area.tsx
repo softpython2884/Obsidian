@@ -85,16 +85,15 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
     if (channel) {
       // Fetch messages
       fetch(`/api/messages?channelId=${channel.id}`)
-        .then((res) => res.json())
-        .then((data) => {
+        .then(async (res) => {
+          if (!res.ok) { setTimeout(scrollToBottom, 100); return; }
+          const data = await res.json();
           if (Array.isArray(data)) {
             const decryptedMessages = data.map((msg: any) => ({
               ...msg,
               content: decrypt(msg.content)
             }));
             setMessages(decryptedMessages);
-          } else {
-            console.error('API returned non-array data:', data);
           }
           setTimeout(scrollToBottom, 100);
         });
@@ -452,7 +451,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
             (new Date(msg.createdAt).getTime() - new Date(messages[index - 1].createdAt).getTime()) < 300000; // 5 mins grouping
 
           return (
-            <ContextMenu key={msg.id}>
+            <ContextMenu key={msg.id || `msg-${index}`}>
               <ContextMenuTrigger>
                 <div
                   className={cn(
