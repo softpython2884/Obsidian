@@ -1,18 +1,30 @@
 'use client';
 
-import React from 'react';
-import { Plus, Hash, Compass, MessageSquare } from 'lucide-react';
+import { Plus, Hash, Compass, MessageSquare, UserPlus, Settings, LogOut, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
+import { toast } from 'sonner';
+import { useAuth } from '@/components/providers/auth-provider';
 
 interface ServerSidebarProps {
   servers: any[];
   activeServer: any;
   onSelectServer: (server: any) => void;
   onOpenModal: () => void;
+  onOpenServerSettings?: () => void;
+  onLeaveServer?: (serverId: string) => void;
 }
 
-export const ServerSidebar = ({ servers, activeServer, onSelectServer, onOpenModal }: ServerSidebarProps) => {
+export const ServerSidebar = ({ servers, activeServer, onSelectServer, onOpenModal, onOpenServerSettings, onLeaveServer }: ServerSidebarProps) => {
+  const { user } = useAuth();
+
   return (
     <div className="flex w-[72px] flex-col items-center space-y-4 bg-glass py-4 h-full z-20">
       {/* Home Button */}

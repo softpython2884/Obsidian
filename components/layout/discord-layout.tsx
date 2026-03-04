@@ -194,6 +194,8 @@ export const DiscordLayout = () => {
           }
         }}
         onOpenModal={() => setIsServerModalOpen(true)}
+        onOpenServerSettings={() => setIsServerSettingsModalOpen(true)}
+        onLeaveServer={(serverId) => handleLeaveServer(serverId)}
       />
 
       {activeServer ? (

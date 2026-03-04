@@ -225,45 +225,43 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
     // Handle commands
     if (content.startsWith('/')) {
       const result = await processCommand(content, { setMessages, user, channel, socket });
-      if (result) {
-        if (typeof result === 'string') {
-          // Send the result as a message to the channel
-          const response = await fetch('/api/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              content: result,
-              userId: user.id,
-              channelId: channel.id,
-            }),
-          });
-          const newMessage = await response.json();
-          if (socket) {
-            socket.emit('send-message', {
-              channelId: channel.id,
-              message: newMessage
-            });
-          }
-          return;
-        } else if (typeof result === 'object' && result?.type === 'system') {
-          // Local system message
-          const systemMsg = {
-            id: 'system-' + Date.now(),
-            content: result.content,
-            user: {
-              id: 'system',
-              pseudo: 'Marcus (System)',
-              role: 'SYSTEM',
-              avatarUrl: null,
-              isBot: true
-            },
-            createdAt: new Date().toISOString(),
-            isSystem: true
-          };
-          setMessages((prev) => [...prev, systemMsg]);
-          return;
-        }
+
+      // Create a system response for all commands (even text results)
+      const systemMsgContent = typeof result === 'string' ? result : (result?.type === 'system' ? result.content : null);
+
+      if (systemMsgContent) {
+        const systemMsg = {
+          id: 'system-' + Date.now(),
+          content: systemMsgContent,
+          user: {
+            id: 'marcus-system-bot',
+            pseudo: 'Marcus',
+            role: 'SYSTEM',
+            avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=Marcus',
+            isBot: true
+          },
+          createdAt: new Date().toISOString(),
+          isSystem: true,
+          ephemeral: true // Local only
+        };
+        setMessages((prev) => [...prev, systemMsg]);
+      } else if (!result) {
+        // Unknown command
+        const errorMsg = {
+          id: 'error-' + Date.now(),
+          content: `Unknown command: ${content.split(' ')[0]}. Type /help for a list of commands.`,
+          user: {
+            id: 'system',
+            pseudo: 'System',
+            isBot: true
+          },
+          createdAt: new Date().toISOString(),
+          isSystem: true,
+          ephemeral: true
+        };
+        setMessages((prev) => [...prev, errorMsg]);
       }
+      return; // Stop here for any slash command
     }  // If command not found or returns null, proceed as normal message? 
     // Or maybe show error? For now, let's just send it as text if not processed.
     // But wait, if I type /unknown, processCommand returns null.
@@ -604,9 +602,28 @@ return (
               <ContextMenuItem
                 className="text-red-500 focus:bg-red-500/10 focus:text-red-500 cursor-pointer"
                 onClick={() => handleDeleteMessage(msg.id)}
-                disabled={user?.id !== msg.user.id && user?.role !== 'ADMIN'}
+                disabled={!(user?.id === msg.user.id || user?.role === 'ADMIN' || server?.ownerId === user?.id)}
               >
                 <Trash2 className="mr-2 h-4 w-4" /> Delete Message
+              </ContextMenuItem>
+              <ContextMenuSeparator className="bg-[#222]" />
+              <ContextMenuItem
+                className="focus:bg-white/10 focus:text-white cursor-pointer text-xs text-white/40"
+                onClick={() => {
+                  navigator.clipboard.writeText(msg.id);
+                  toast.success("Message ID copied");
+                }}
+              >
+                <Hash className="mr-2 h-3 w-3" /> Copy ID
+              </ContextMenuItem>
+              <ContextMenuItem
+                className="focus:bg-white/10 focus:text-white cursor-pointer text-xs text-white/40"
+                onClick={() => {
+                  navigator.clipboard.writeText(msg.user.id);
+                  toast.success("User ID copied");
+                }}
+              >
+                <Shield className="mr-2 h-3 w-3" /> Copy User ID
               </ContextMenuItem>
             </ContextMenuContent>
           </ContextMenu>

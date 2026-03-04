@@ -29,6 +29,8 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
   // Overview State
   const [serverName, setServerName] = useState(server?.name || "");
   const [serverImage, setServerImage] = useState(server?.imageUrl || "");
+  const [systemChannelId, setSystemChannelId] = useState(server?.systemChannelId || "");
+  const [logChannelId, setLogChannelId] = useState(server?.logChannelId || "");
 
   // Roles State
   const [roles, setRoles] = useState<any[]>([]);
@@ -68,6 +70,8 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
     if (isOpen && server) {
       setServerName(server.name);
       setServerImage(server.imageUrl || "");
+      setSystemChannelId(server.systemChannelId || "");
+      setLogChannelId(server.logChannelId || "");
       fetchRoles();
       fetchChannels();
       fetchMembers();
@@ -79,7 +83,12 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
       const res = await fetch(`/api/servers/${server.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: serverName, imageUrl: serverImage }),
+        body: JSON.stringify({
+          name: serverName,
+          imageUrl: serverImage,
+          systemChannelId: systemChannelId === "none" ? null : systemChannelId,
+          logChannelId: logChannelId === "none" ? null : logChannelId
+        }),
       });
       if (res.ok) {
         const updated = await res.json();
@@ -376,7 +385,7 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
         const res = await fetch(`/api/servers/${server.id}/kick`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ memberId }),
+          body: JSON.stringify({ memberId, modId: user?.id }),
         });
         if (res.ok) {
           fetchMembers();
@@ -394,7 +403,7 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
         const res = await fetch(`/api/servers/${server.id}/ban`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ memberId }),
+          body: JSON.stringify({ memberId, modId: user?.id }),
         });
         if (res.ok) {
           fetchMembers();
@@ -443,7 +452,7 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
                     <Input
                       value={serverName}
                       onChange={(e) => setServerName(e.target.value)}
-                      className="bg-[#1E1F22] border-none text-white"
+                      className="bg-[#1E1F22] border-none text-white focus-visible:ring-1 focus-visible:ring-[#5865F2]"
                     />
                   </div>
                   <div className="space-y-2">
@@ -454,6 +463,38 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
                       placeholder="https://example.com/avatar.png"
                       className="bg-[#1E1F22] border-none text-white focus-visible:ring-1 focus-visible:ring-[#5865F2]"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="uppercase text-xs font-bold text-[#B5BAC1]">System Channel</Label>
+                      <select
+                        value={systemChannelId || "none"}
+                        onChange={(e) => setSystemChannelId(e.target.value)}
+                        className="w-full bg-[#1E1F22] border-none text-white p-2 rounded text-sm focus:ring-1 focus:ring-[#5865F2] outline-none h-10 appearance-none cursor-pointer"
+                      >
+                        <option value="none">Disabled</option>
+                        {categories.flatMap(c => c.channels).filter(ch => ch.type === 'TEXT').map(ch => (
+                          <option key={ch.id} value={ch.id}># {ch.name}</option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-[#949BA4]">Where welcome messages are sent.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="uppercase text-xs font-bold text-[#B5BAC1]">Log Channel</Label>
+                      <select
+                        value={logChannelId || "none"}
+                        onChange={(e) => setLogChannelId(e.target.value)}
+                        className="w-full bg-[#1E1F22] border-none text-white p-2 rounded text-sm focus:ring-1 focus:ring-[#5865F2] outline-none h-10 appearance-none cursor-pointer"
+                      >
+                        <option value="none">Disabled</option>
+                        {categories.flatMap(c => c.channels).filter(ch => ch.type === 'TEXT').map(ch => (
+                          <option key={ch.id} value={ch.id}># {ch.name}</option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-[#949BA4]">Where moderation logs are sent.</p>
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-col items-center space-y-2">
