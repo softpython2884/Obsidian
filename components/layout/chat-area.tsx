@@ -578,7 +578,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                         <CornerUpRight size={14} />
                       </div>
 
-                      {(user?.id === msg.user.id || user?.role === 'ADMIN' || server?.ownerId === user?.id) && (
+                      {(user?.id === msg.user?.id || user?.role === 'ADMIN' || server?.ownerId === user?.id) && (
                         <>
                           <div
                             className="p-1.5 hover:bg-white/10 rounded-md cursor-pointer text-white/60 hover:text-white transition-colors"
@@ -629,7 +629,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                 <ContextMenuItem
                   className="text-red-500 focus:bg-red-500/10 focus:text-red-500 cursor-pointer"
                   onClick={() => handleDeleteMessage(msg.id)}
-                  disabled={!(user?.id === msg.user.id || user?.role === 'ADMIN' || server?.ownerId === user?.id)}
+                  disabled={!(user?.id === msg.user?.id || user?.role === 'ADMIN' || server?.ownerId === user?.id)}
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Delete Message
                 </ContextMenuItem>
@@ -646,7 +646,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                 <ContextMenuItem
                   className="focus:bg-white/10 focus:text-white cursor-pointer text-xs text-white/40"
                   onClick={() => {
-                    navigator.clipboard.writeText(msg.user.id);
+                    navigator.clipboard.writeText(msg.user?.id || '');
                     toast.success("User ID copied");
                   }}
                 >

@@ -11,8 +11,10 @@ export async function POST(req: Request) {
 
     const channel = await prisma.channel.findUnique({
       where: { id: channelId },
-      select: { serverId: true }
+      include: { category: true }
     });
+
+    const serverId = channel?.category?.serverId;
 
     const message = await prisma.message.create({
       data: {
@@ -28,14 +30,10 @@ export async function POST(req: Request) {
       include: {
         user: {
           include: {
-            serverMembers: {
-              where: {
-                serverId: channel?.serverId || ''
-              },
-              include: {
-                roles: true
-              }
-            }
+            serverMembers: serverId ? {
+              where: { serverId },
+              include: { roles: true }
+            } : false
           }
         }
       }
@@ -59,28 +57,26 @@ export async function GET(req: Request) {
 
     const channel = await prisma.channel.findUnique({
       where: { id: channelId },
-      select: { serverId: true }
+      include: { category: true }
     });
 
-    if (!channel?.serverId) {
+    if (!channel) {
       return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
     }
+
+    const serverId = channel?.category?.serverId;
 
     const messages = await prisma.message.findMany({
       where: { channelId },
       include: {
-        user: {
+        user: serverId ? {
           include: {
             serverMembers: {
-              where: {
-                serverId: channel.serverId
-              },
-              include: {
-                roles: true
-              }
+              where: { serverId },
+              include: { roles: true }
             }
           }
-        }
+        } : true
       },
       orderBy: { createdAt: 'asc' },
       take: 50,
@@ -88,6 +84,8 @@ export async function GET(req: Request) {
 
     return NextResponse.json(messages);
   } catch (error) {
+    console.error('Error fetching messages:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
