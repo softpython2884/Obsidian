@@ -605,7 +605,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                   <Smile className="mr-2 h-4 w-4" /> Add Reaction
                 </ContextMenuItem>
                 */}
-                <ContextMenuItem className="focus:bg-white/10 focus:text-white cursor-pointer" onClick={() => handleEditMessage(msg)} disabled={user?.id !== msg.user.id}>
+                <ContextMenuItem className="focus:bg-white/10 focus:text-white cursor-pointer" onClick={() => handleEditMessage(msg)} disabled={user?.id !== msg.user?.id}>
                   <Pencil className="mr-2 h-4 w-4" /> Edit Message
                 </ContextMenuItem>
                 {/*

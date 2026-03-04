@@ -48,30 +48,25 @@ export async function PATCH(
             }
         });
 
-        // Log the change if log channel exists
-        if (server?.logChannelId) {
-            const addedRoles = updatedMember.roles.filter(r => !oldRoleIds.includes(r.id));
-            const removedRoles = member.roles.filter(r => !roleIds.includes(r.id));
-
-            if (addedRoles.length > 0 || removedRoles.length > 0) {
-                const mod = modId ? await prisma.user.findUnique({ where: { id: modId } }) : null;
-                let logContent = `🛡️ **Roles Updated**: ${member.user.pseudo} (ID: ${member.user.id})${mod ? ` by ${mod.pseudo}` : ''}`;
-
-                if (addedRoles.length > 0) {
-                    logContent += `\n✅ **Added**: ${addedRoles.map(r => r.name).join(', ')}`;
+        // Log the change if log channel exists (non-critical, wrapped in try/catch)
+        try {
+            const server = await prisma.server.findUnique({ where: { id: serverId } });
+            const logChannelId = (server as any)?.logChannelId;
+            if (logChannelId) {
+                const addedRoles = updatedMember.roles.filter(r => !oldRoleIds.includes(r.id));
+                const removedRoles = member.roles.filter(r => !roleIds.includes(r.id));
+                if (addedRoles.length > 0 || removedRoles.length > 0) {
+                    const mod = modId ? await prisma.user.findUnique({ where: { id: modId } }) : null;
+                    let logContent = `🛡️ **Roles Updated**: ${member.user.pseudo} (ID: ${member.user.id})${mod ? ` by ${mod.pseudo}` : ''}`;
+                    if (addedRoles.length > 0) logContent += `\n✅ **Added**: ${addedRoles.map(r => r.name).join(', ')}`;
+                    if (removedRoles.length > 0) logContent += `\n❌ **Removed**: ${removedRoles.map(r => r.name).join(', ')}`;
+                    await prisma.message.create({
+                        data: { content: encrypt(logContent), userId: 'marcus-system-bot', channelId: logChannelId }
+                    });
                 }
-                if (removedRoles.length > 0) {
-                    logContent += `\n❌ **Removed**: ${removedRoles.map(r => r.name).join(', ')}`;
-                }
-
-                await prisma.message.create({
-                    data: {
-                        content: encrypt(logContent),
-                        userId: 'marcus-system-bot',
-                        channelId: server.logChannelId,
-                    }
-                });
             }
+        } catch (logErr) {
+            console.warn('Role change logging skipped:', logErr);
         }
 
         return NextResponse.json(updatedMember);

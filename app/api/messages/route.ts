@@ -6,14 +6,13 @@ export async function POST(req: Request) {
   try {
     const { content, userId, channelId, gifUrl, isEmbed, embedData, isForwarded, forwardedFrom } = await req.json();
 
-    // Encrypt content before saving
     const encryptedContent = content ? encrypt(content) : "";
 
+    // Get serverId via category (Channel has no direct serverId)
     const channel = await prisma.channel.findUnique({
       where: { id: channelId },
       include: { category: true }
     });
-
     const serverId = channel?.category?.serverId;
 
     const message = await prisma.message.create({
@@ -30,10 +29,9 @@ export async function POST(req: Request) {
       include: {
         user: {
           include: {
-            serverMembers: serverId ? {
-              where: { serverId },
-              include: { roles: true }
-            } : false
+            serverMembers: serverId
+              ? { where: { serverId }, include: { roles: true } }
+              : { where: { id: 'none' }, include: { roles: true } } // empty result for DMs
           }
         }
       }
@@ -61,7 +59,7 @@ export async function GET(req: Request) {
     });
 
     if (!channel) {
-      return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
+      return NextResponse.json([], { status: 200 });
     }
 
     const serverId = channel?.category?.serverId;
@@ -69,14 +67,13 @@ export async function GET(req: Request) {
     const messages = await prisma.message.findMany({
       where: { channelId },
       include: {
-        user: serverId ? {
+        user: {
           include: {
-            serverMembers: {
-              where: { serverId },
-              include: { roles: true }
-            }
+            serverMembers: serverId
+              ? { where: { serverId }, include: { roles: true } }
+              : { where: { id: 'none' }, include: { roles: true } } // empty result for DMs
           }
-        } : true
+        }
       },
       orderBy: { createdAt: 'asc' },
       take: 50,
