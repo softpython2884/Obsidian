@@ -4,6 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { MessageSquare, Settings, UserPlus, X, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { User, UserX, MessageSquare, Trash2 } from 'lucide-react';
 
 interface DMSidebarProps {
   activeChannel: any;
@@ -53,43 +60,77 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
           {dms.map((dm) => {
             const otherMember = dm.members.find((m: any) => m.id !== user?.id);
             return (
-              <div
-                key={dm.id}
-                onClick={() => onSelectChannel(dm)}
-                className={cn(
-                  "group flex cursor-pointer items-center rounded px-2 py-2 transition-colors",
-                  activeChannel?.id === dm.id ? "bg-white/20 text-white" : "text-[#949BA4] hover:bg-white/10 hover:text-[#DBDEE1]"
-                )}
-              >
-                <div className="relative mr-3 h-8 w-8 shrink-0">
-                  {otherMember?.avatarUrl ? (
-                    <img src={otherMember.avatarUrl} alt={otherMember.pseudo} className="h-full w-full rounded-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#5865F2] text-xs font-bold text-white">
-                      {otherMember?.pseudo?.charAt(0).toUpperCase()}
+              <ContextMenu key={dm.id}>
+                <ContextMenuTrigger>
+                  <div
+                    onClick={() => onSelectChannel(dm)}
+                    className={cn(
+                      "group flex cursor-pointer items-center rounded px-2 py-2 transition-colors",
+                      activeChannel?.id === dm.id ? "bg-white/20 text-white" : "text-[#949BA4] hover:bg-white/10 hover:text-[#DBDEE1]"
+                    )}
+                  >
+                    <div className="relative mr-3 h-8 w-8 shrink-0">
+                      {otherMember?.avatarUrl ? (
+                        <img src={otherMember.avatarUrl} alt={otherMember.pseudo} className="h-full w-full rounded-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-[#5865F2] text-xs font-bold text-white">
+                          {otherMember?.pseudo?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className={cn(
+                        "absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#2B2D31]",
+                        otherMember?.state === 'ONLINE' ? "bg-[#23A559]" :
+                          otherMember?.state === 'IDLE' ? "bg-[#F0B232]" :
+                            otherMember?.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
+                      )} />
                     </div>
-                  )}
-                  <div className={cn(
-                    "absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#2B2D31]",
-                    otherMember?.state === 'ONLINE' ? "bg-[#23A559]" :
-                      otherMember?.state === 'IDLE' ? "bg-[#F0B232]" :
-                        otherMember?.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
-                  )} />
-                </div>
-                <div className="flex flex-col overflow-hidden">
-                  <span className="truncate font-medium text-[#DBDEE1] group-hover:text-white">
-                    {otherMember?.pseudo || 'Unknown User'}
-                  </span>
-                  {dm.messages?.[0] && (
-                    <span className="truncate text-xs text-[#949BA4]">
-                      {dm.messages[0].content ? 'Message' : 'Sent an attachment'}
-                    </span>
-                  )}
-                </div>
-                <div className="ml-auto hidden group-hover:block text-[#B5BAC1] hover:text-white">
-                  <X size={14} onClick={(e) => { e.stopPropagation(); /* Handle close DM */ }} />
-                </div>
-              </div>
+                    <div className="flex flex-col overflow-hidden text-left">
+                      <span className="truncate font-medium text-[#DBDEE1] group-hover:text-white">
+                        {otherMember?.pseudo || 'Unknown User'}
+                      </span>
+                      {dm.messages?.[0] && (
+                        <span className="truncate text-xs text-[#949BA4]">
+                          {dm.messages[0].content ? 'Message' : 'Sent an attachment'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="ml-auto hidden group-hover:block text-[#B5BAC1] hover:text-white">
+                      <X size={14} onClick={(e) => { e.stopPropagation(); /* Handle close DM */ }} />
+                    </div>
+                  </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent className="w-48 bg-[#111214] border-[#1e1f22] text-[#B5BAC1]">
+                  <ContextMenuItem
+                    className="hover:bg-[#4752C4] hover:text-white cursor-pointer"
+                    onClick={() => {/* Handle view profile - need props */ }}
+                  >
+                    <User size={14} className="mr-2" />
+                    Profile
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    className="hover:bg-[#4752C4] hover:text-white cursor-pointer"
+                    onClick={() => onSelectChannel(dm)}
+                  >
+                    <MessageSquare size={14} className="mr-2" />
+                    Message
+                  </ContextMenuItem>
+                  <ContextMenuSeparator className="bg-white/5" />
+                  <ContextMenuItem
+                    className="text-red-400 hover:bg-red-500 hover:text-white cursor-pointer"
+                    onClick={() => {/* Handle block */ }}
+                  >
+                    <UserX size={14} className="mr-2" />
+                    Block
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    className="text-red-400 hover:bg-red-500 hover:text-white cursor-pointer"
+                    onClick={() => {/* Handle close DM */ }}
+                  >
+                    <Trash2 size={14} className="mr-2" />
+                    Close DM
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             );
           })}
         </div>

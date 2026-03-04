@@ -40,35 +40,24 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
   // Members State
   const [members, setMembers] = useState<any[]>([]);
 
-  const fetchRoles = async () => {
+  const refreshServer = async () => {
     try {
-      const res = await fetch(`/api/servers/${server.id}/roles`);
-      const data = await res.json();
-      setRoles(data);
+      const res = await fetch(`/api/servers/${server.id}`);
+      if (res.ok) {
+        const updated = await res.json();
+        onUpdateServer(updated);
+        setRoles(updated.roles || []);
+        setCategories(updated.categories || []);
+        setMembers(updated.members || []);
+      }
     } catch (error) {
-      console.error("Failed to fetch roles", error);
+      console.error("Failed to refresh server", error);
     }
   };
 
-  const fetchChannels = async () => {
-    try {
-      const res = await fetch(`/api/servers/${server.id}/channels`);
-      const data = await res.json();
-      setCategories(data);
-    } catch (error) {
-      console.error("Failed to fetch channels", error);
-    }
-  };
-
-  const fetchMembers = async () => {
-    try {
-      const res = await fetch(`/api/servers/${server.id}/members`);
-      const data = await res.json();
-      setMembers(data);
-    } catch (error) {
-      console.error("Failed to fetch members", error);
-    }
-  };
+  const fetchRoles = refreshServer;
+  const fetchChannels = refreshServer;
+  const fetchMembers = refreshServer;
 
   const prevIsOpen = useRef(false);
 
@@ -150,6 +139,34 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
     }
   };
 
+  const handleReorderRoles = async (newRoles: any[]) => {
+    try {
+      const list = newRoles.map((role, index) => ({ id: role.id, position: newRoles.length - index }));
+      const res = await fetch(`/api/servers/${server.id}/roles/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ list }),
+      });
+      if (res.ok) {
+        toast.success("Roles reordered");
+        refreshServer();
+      }
+    } catch (error) {
+      toast.error("Failed to reorder roles");
+    }
+  };
+
+  const moveRole = (index: number, direction: 'up' | 'down') => {
+    const newRoles = [...roles];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newRoles.length) return;
+
+    const [moved] = newRoles.splice(index, 1);
+    newRoles.splice(targetIndex, 0, moved);
+    setRoles(newRoles);
+    handleReorderRoles(newRoles);
+  };
+
   const handleDeleteRole = async (roleId: string) => {
     if (confirm("Delete this role?")) {
       try {
@@ -163,6 +180,42 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
         toast.error("Failed to delete role");
       }
     }
+  };
+
+  const handleReorderChannels = async (categoryId: string | null, newChannels: any[]) => {
+    try {
+      const list = newChannels.map((ch, index) => ({
+        id: ch.id,
+        position: index,
+        categoryId: categoryId === 'null' ? null : categoryId
+      }));
+      const res = await fetch(`/api/servers/${server.id}/channels/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ list }),
+      });
+      if (res.ok) {
+        toast.success("Channels reordered");
+        refreshServer();
+      }
+    } catch (error) {
+      toast.error("Failed to reorder channels");
+    }
+  };
+
+  const moveChannel = (categoryIndex: number, channelIndex: number, direction: 'up' | 'down') => {
+    const newCategories = [...categories];
+    const category = newCategories[categoryIndex];
+    const newChannels = [...category.channels];
+    const targetIndex = direction === 'up' ? channelIndex - 1 : channelIndex + 1;
+
+    if (targetIndex < 0 || targetIndex >= newChannels.length) return;
+
+    const [moved] = newChannels.splice(channelIndex, 1);
+    newChannels.splice(targetIndex, 0, moved);
+    category.channels = newChannels;
+    setCategories(newCategories);
+    handleReorderChannels(category.id, newChannels);
   };
 
   const handleCreateCategory = async (name: string) => {
@@ -389,17 +442,35 @@ export const ServerSettingsModal = ({ isOpen, onClose, server, onUpdateServer, o
               </div>
               <div className="flex flex-1 gap-4 overflow-hidden">
                 <div className="w-1/3 bg-[#2B2D31] rounded overflow-y-auto">
-                  {roles.map(role => (
+                  {roles.map((role, index) => (
                     <div
                       key={role.id}
-                      onClick={() => setEditingRole(role)}
-                      className={`p-2 cursor-pointer flex items-center justify-between hover:bg-[#404249] ${editingRole?.id === role.id ? 'bg-[#404249]' : ''}`}
+                      className={`p-2 cursor-pointer group flex items-center justify-between hover:bg-[#404249] ${editingRole?.id === role.id ? 'bg-[#404249]' : ''}`}
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-1" onClick={() => setEditingRole(role)}>
                         <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: role.color }} />
-                        <span>{role.name}</span>
+                        <span className="text-sm truncate max-w-[100px]">{role.name}</span>
                       </div>
-                      <ChevronRight size={16} className="text-[#B5BAC1]" />
+                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-[#B5BAC1] hover:text-white disabled:opacity-30"
+                          onClick={(e) => { e.stopPropagation(); moveRole(index, 'up'); }}
+                          disabled={index === 0}
+                        >
+                          <ChevronUp size={12} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-[#B5BAC1] hover:text-white disabled:opacity-30"
+                          onClick={(e) => { e.stopPropagation(); moveRole(index, 'down'); }}
+                          disabled={index === roles.length - 1}
+                        >
+                          <ChevronDown size={12} />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>

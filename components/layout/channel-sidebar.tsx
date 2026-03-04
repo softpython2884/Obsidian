@@ -13,6 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 interface ChannelSidebarProps {
   server: any;
@@ -113,30 +119,63 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
                   member?.roles?.some((memberRole: any) => memberRole.id === allowedRole.id)
                 );
               }).map((channel: any) => (
-                <div
-                  key={channel.id}
-                  onClick={() => onSelectChannel(channel)}
-                  className={cn(
-                    "group flex cursor-pointer items-center rounded-lg px-2 py-1.5 transition-all duration-200",
-                    activeChannel?.id === channel.id
-                      ? "bg-white/10 text-white"
-                      : "text-white/40 hover:bg-white/5 hover:text-white/80"
+                <ContextMenu key={channel.id}>
+                  <ContextMenuTrigger>
+                    <div
+                      onClick={() => onSelectChannel(channel)}
+                      className={cn(
+                        "group flex cursor-pointer items-center rounded-lg px-2 py-1.5 transition-all duration-200",
+                        activeChannel?.id === channel.id
+                          ? "bg-white/10 text-white"
+                          : "text-white/40 hover:bg-white/5 hover:text-white/80"
+                      )}
+                    >
+                      {channel.isPrivate ? (
+                        <Lock size={14} className={cn("mr-2", activeChannel?.id === channel.id ? "text-[#F0B232]" : "text-[#F0B232]/40 group-hover:text-[#F0B232]/60")} />
+                      ) : (
+                        channel.type === 'VOICE' ? (
+                          <Volume2 size={16} className={cn("mr-2", activeChannel?.id === channel.id ? "text-white/60" : "text-white/20 group-hover:text-white/40")} />
+                        ) : (
+                          <Hash size={16} className={cn("mr-2", activeChannel?.id === channel.id ? "text-white/60" : "text-white/20 group-hover:text-white/40")} />
+                        )
+                      )}
+                      <span className={cn("truncate text-sm font-medium", activeChannel?.id === channel.id ? "text-white" : "text-white/60 group-hover:text-white/90")}>{channel.name}</span>
+                      {((server.ownerId === user?.id || isAdmin) && activeChannel?.id !== channel.id) && (
+                        <Settings
+                          size={12}
+                          className="ml-auto hidden text-white/20 group-hover:block hover:text-white"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenServerSettings?.();
+                          }}
+                        />
+                      )}
+                    </div>
+                  </ContextMenuTrigger>
+                  {(isOwner || isAdmin) && (
+                    <ContextMenuContent className="w-48 bg-[#111214] border-[#1e1f22] text-[#B5BAC1]">
+                      <ContextMenuItem
+                        className="hover:bg-[#4752C4] hover:text-white cursor-pointer"
+                        onClick={() => onOpenServerSettings?.()}
+                      >
+                        <Settings size={14} className="mr-2" />
+                        Edit Channel
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        className="text-red-400 hover:bg-red-500 hover:text-white cursor-pointer"
+                        onClick={() => {
+                          if (confirm(`Delete #${channel.name}?`)) {
+                            fetch(`/api/servers/${server.id}/channels/${channel.id}`, { method: 'DELETE' })
+                              .then(res => res.ok && onOpenServerSettings?.()); // This should trigger a refresh via callback if possible
+                          }
+                        }}
+                      >
+                        <Trash2 size={14} className="mr-2" />
+                        Delete Channel
+                      </ContextMenuItem>
+                    </ContextMenuContent>
                   )}
-                >
-                  {channel.isPrivate ? (
-                    <Lock size={14} className={cn("mr-2", activeChannel?.id === channel.id ? "text-[#F0B232]" : "text-[#F0B232]/40 group-hover:text-[#F0B232]/60")} />
-                  ) : (
-                    channel.type === 'VOICE' ? (
-                      <Volume2 size={16} className={cn("mr-2", activeChannel?.id === channel.id ? "text-white/60" : "text-white/20 group-hover:text-white/40")} />
-                    ) : (
-                      <Hash size={16} className={cn("mr-2", activeChannel?.id === channel.id ? "text-white/60" : "text-white/20 group-hover:text-white/40")} />
-                    )
-                  )}
-                  <span className={cn("truncate text-sm font-medium", activeChannel?.id === channel.id ? "text-white" : "text-white/60 group-hover:text-white/90")}>{channel.name}</span>
-                  {((server.ownerId === user?.id || isAdmin) && activeChannel?.id !== channel.id) && (
-                    <Settings size={12} className="ml-auto hidden text-white/20 group-hover:block hover:text-white" />
-                  )}
-                </div>
+                </ContextMenu>
               ))}
             </div>
           </div>

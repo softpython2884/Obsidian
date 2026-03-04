@@ -9,6 +9,11 @@ export async function POST(req: Request) {
     // Encrypt content before saving
     const encryptedContent = content ? encrypt(content) : "";
 
+    const channel = await prisma.channel.findUnique({
+      where: { id: channelId },
+      select: { serverId: true }
+    });
+
     const message = await prisma.message.create({
       data: {
         content: encryptedContent,
@@ -22,18 +27,15 @@ export async function POST(req: Request) {
       },
       include: {
         user: {
-          select: {
-            id: true,
-            pseudo: true,
-            avatarUrl: true,
-            role: true,
-            bio: true,
-            createdAt: true,
-            socialLinks: true,
-            bannerUrl: true,
-            accentColor: true,
-            state: true,
-            status: true,
+          include: {
+            serverMembers: {
+              where: {
+                serverId: channel?.serverId || ''
+              },
+              include: {
+                roles: true
+              }
+            }
           }
         }
       }
@@ -55,22 +57,28 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Channel ID required' }, { status: 400 });
     }
 
+    const channel = await prisma.channel.findUnique({
+      where: { id: channelId },
+      select: { serverId: true }
+    });
+
+    if (!channel?.serverId) {
+      return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
+    }
+
     const messages = await prisma.message.findMany({
       where: { channelId },
       include: {
         user: {
-          select: {
-            id: true,
-            pseudo: true,
-            avatarUrl: true,
-            role: true,
-            bio: true,
-            createdAt: true,
-            socialLinks: true,
-            bannerUrl: true,
-            accentColor: true,
-            state: true,
-            status: true,
+          include: {
+            serverMembers: {
+              where: {
+                serverId: channel.serverId
+              },
+              include: {
+                roles: true
+              }
+            }
           }
         }
       },
