@@ -13,6 +13,7 @@ import { UserProfileModal } from '@/components/modals/user-profile-modal';
 import { ServerSettingsModal } from '@/components/modals/server-settings-modal';
 import { DMSidebar } from '@/components/layout/dm-sidebar';
 import { DMView } from '@/components/layout/dm-view';
+import { useSocket } from '@/components/providers/socket-provider';
 
 export const DiscordLayout = () => {
   const { user, logout } = useAuth();
@@ -25,6 +26,75 @@ export const DiscordLayout = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [profileCoords, setProfileCoords] = useState<{ x: number, y: number } | null>(null);
+
+  const { socket } = useSocket();
+  const [unreadChannels, setUnreadChannels] = useState<Record<string, boolean>>({});
+  const [mentionChannels, setMentionChannels] = useState<Record<string, number>>({});
+  const [unreadServers, setUnreadServers] = useState<Record<string, boolean>>({});
+  const [mentionServers, setMentionServers] = useState<Record<string, number>>({});
+
+  // Listen for new messages globally for notifications
+  useEffect(() => {
+    if (!socket || !user) return;
+    const handleNewMessage = (msg: any) => {
+      if (activeChannel?.id === msg.channelId) return; // Ignore if we are in the channel
+
+      const isMentioned = msg.content && (msg.content.includes(`@${user.pseudo}`) || msg.content.includes(`<@${user.id}>`));
+
+      setUnreadChannels(prev => ({ ...prev, [msg.channelId]: true }));
+      if (isMentioned) {
+        setMentionChannels(prev => ({ ...prev, [msg.channelId]: (prev[msg.channelId] || 0) + 1 }));
+      }
+
+      // Find the server for this channel
+      const server = servers.find(s => s.categories?.some((c: any) => c.channels?.some((ch: any) => ch.id === msg.channelId)));
+      if (server) {
+        setUnreadServers(prev => ({ ...prev, [server.id]: true }));
+        if (isMentioned) {
+          setMentionServers(prev => ({ ...prev, [server.id]: (prev[server.id] || 0) + 1 }));
+        }
+      }
+    };
+
+    socket.on('new-message', handleNewMessage);
+    return () => { socket.off('new-message', handleNewMessage); };
+  }, [socket, activeChannel?.id, user, servers]);
+
+  // Clear unread/mentions when visiting a channel
+  useEffect(() => {
+    if (activeChannel) {
+      setUnreadChannels(prev => {
+        const next = { ...prev };
+        delete next[activeChannel.id];
+        return next;
+      });
+      setMentionChannels(prev => {
+        const next = { ...prev };
+        delete next[activeChannel.id];
+        return next;
+      });
+
+      if (activeServer) {
+        // Find total mentions in other channels of this server
+        let totalMentions = 0;
+        let hasUnread = false;
+        activeServer.categories?.forEach((cat: any) => {
+          cat.channels?.forEach((ch: any) => {
+            if (ch.id !== activeChannel.id) {
+              totalMentions += mentionChannels[ch.id] || 0;
+              if (unreadChannels[ch.id]) hasUnread = true;
+            }
+          });
+        });
+
+        if (totalMentions === 0) setMentionServers(prev => { const n = { ...prev }; delete n[activeServer.id]; return n; });
+        else setMentionServers(prev => ({ ...prev, [activeServer.id]: totalMentions }));
+
+        if (!hasUnread) setUnreadServers(prev => { const n = { ...prev }; delete n[activeServer.id]; return n; });
+        else setUnreadServers(prev => ({ ...prev, [activeServer.id]: true }));
+      }
+    }
+  }, [activeChannel, activeServer, mentionChannels, unreadChannels]);
 
   const handleViewProfile = (user: any, e?: React.MouseEvent) => {
     setSelectedUser(user);
@@ -194,6 +264,8 @@ export const DiscordLayout = () => {
       <ServerSidebar
         servers={servers}
         activeServer={activeServer}
+        unreadServers={unreadServers}
+        mentionServers={mentionServers}
         onSelectServer={(server) => {
           setActiveServer(server);
           if (server) {
@@ -217,6 +289,8 @@ export const DiscordLayout = () => {
           <ChannelSidebar
             server={activeServer}
             activeChannel={activeChannel}
+            unreadChannels={unreadChannels}
+            mentionChannels={mentionChannels}
             onSelectChannel={setActiveChannel}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
             onOpenServerSettings={() => setIsServerSettingsModalOpen(true)}
@@ -241,6 +315,8 @@ export const DiscordLayout = () => {
         <>
           <DMSidebar
             activeChannel={activeChannel}
+            unreadChannels={unreadChannels}
+            mentionChannels={mentionChannels}
             onSelectChannel={setActiveChannel}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
             onViewProfile={handleViewProfile}
