@@ -62,6 +62,10 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
   const [filteredCommands, setFilteredCommands] = useState<any[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
 
+  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
+  const [filteredMembers, setFilteredMembers] = useState<any[]>([]);
+  const [mentionIndex, setMentionIndex] = useState(0);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -297,6 +301,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
     const val = e.target.value;
     setInputValue(val);
 
+    // Command suggestions
     if (val.startsWith('/')) {
       const search = val.slice(1).toLowerCase();
       const filtered = commands.filter(c => c.name.toLowerCase().startsWith(search));
@@ -307,8 +312,30 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
       } else {
         setShowSuggestions(false);
       }
+      setShowMentionSuggestions(false);
+    }
+    // Mention suggestions
+    else if (val.includes('@') && server?.members) {
+      const lastAtWord = val.split(' ').pop();
+      if (lastAtWord?.startsWith('@')) {
+        const search = lastAtWord.slice(1).toLowerCase();
+        const members = server.members.map((m: any) => m.user).filter((u: any) => !!u);
+        const filtered = members.filter((u: any) => u.pseudo.toLowerCase().startsWith(search));
+
+        if (filtered.length > 0) {
+          setFilteredMembers(filtered);
+          setShowMentionSuggestions(true);
+          setMentionIndex(0);
+        } else {
+          setShowMentionSuggestions(false);
+        }
+      } else {
+        setShowMentionSuggestions(false);
+      }
+      setShowSuggestions(false);
     } else {
       setShowSuggestions(false);
+      setShowMentionSuggestions(false);
     }
 
     if (!isTyping && socket && user) {
@@ -324,6 +351,14 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
   const selectSuggestion = (cmd: any) => {
     setInputValue(`/${cmd.name} `);
     setShowSuggestions(false);
+  };
+
+  const selectMention = (memberUser: any) => {
+    const words = inputValue.split(' ');
+    words.pop(); // Remove the typed @word
+    words.push(`@${memberUser.pseudo} `);
+    setInputValue(words.join(' '));
+    setShowMentionSuggestions(false);
   };
 
   const handleEditMessage = (msg: any) => {
@@ -719,6 +754,43 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
               ))}
             </div>
           </div>
+        {/* Mention Suggestions */}
+        {showMentionSuggestions && (
+          <div className="absolute bottom-[calc(100%-8px)] left-6 right-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="p-2 border-b border-white/5 bg-black/20">
+              <span className="text-[10px] font-bold uppercase text-white/40 tracking-widest pl-2">Members</span>
+            </div>
+            <div className="max-h-60 overflow-y-auto custom-scrollbar" id="mentions-scroll-container">
+              {filteredMembers.map((memberUser, index) => (
+                <div
+                  key={memberUser.id}
+                  id={`mention-suggest-${index}`}
+                  className={cn(
+                    "px-4 py-2 flex items-center justify-between cursor-pointer transition-colors",
+                    index === mentionIndex ? "bg-[#5865f2] text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  )}
+                  onClick={() => selectMention(memberUser)}
+                  onMouseEnter={() => setMentionIndex(index)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="h-6 w-6 rounded-full overflow-hidden bg-[#2B2D31] shrink-0">
+                      {memberUser.avatarUrl ? (
+                        <img src={memberUser.avatarUrl} alt={memberUser.pseudo} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center font-bold text-[10px] text-white/50 bg-[#5865f2]">
+                          {memberUser.pseudo.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-sm font-semibold">{memberUser.pseudo}</span>
+                  </div>
+                  {index === mentionIndex && (
+                    <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded text-white/60">TAB</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         <div className="mb-2 h-4 text-[10px] text-white/30 px-2 font-mono flex justify-between">
@@ -768,6 +840,27 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                     selectSuggestion(filteredCommands[suggestionIndex]);
                   } else if (e.key === 'Escape') {
                     setShowSuggestions(false);
+                  }
+                } else if (showMentionSuggestions) {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setMentionIndex((prev) => {
+                      const next = (prev + 1) % filteredMembers.length;
+                      document.getElementById(`mention-suggest-${next}`)?.scrollIntoView({ block: 'nearest' });
+                      return next;
+                    });
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setMentionIndex((prev) => {
+                      const prevIdx = (prev - 1 + filteredMembers.length) % filteredMembers.length;
+                      document.getElementById(`mention-suggest-${prevIdx}`)?.scrollIntoView({ block: 'nearest' });
+                      return prevIdx;
+                    });
+                  } else if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    selectMention(filteredMembers[mentionIndex]);
+                  } else if (e.key === 'Escape') {
+                    setShowMentionSuggestions(false);
                   }
                 } else if (e.key === 'Enter') {
                   handleSendMessage();
