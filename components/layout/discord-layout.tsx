@@ -62,39 +62,53 @@ export const DiscordLayout = () => {
 
   // Clear unread/mentions when visiting a channel
   useEffect(() => {
-    if (activeChannel) {
+    if (activeChannel?.id) {
       setUnreadChannels(prev => {
+        if (!prev[activeChannel.id]) return prev;
         const next = { ...prev };
         delete next[activeChannel.id];
         return next;
       });
       setMentionChannels(prev => {
+        if (!prev[activeChannel.id]) return prev;
         const next = { ...prev };
         delete next[activeChannel.id];
         return next;
       });
-
-      if (activeServer) {
-        // Find total mentions in other channels of this server
-        let totalMentions = 0;
-        let hasUnread = false;
-        activeServer.categories?.forEach((cat: any) => {
-          cat.channels?.forEach((ch: any) => {
-            if (ch.id !== activeChannel.id) {
-              totalMentions += mentionChannels[ch.id] || 0;
-              if (unreadChannels[ch.id]) hasUnread = true;
-            }
-          });
-        });
-
-        if (totalMentions === 0) setMentionServers(prev => { const n = { ...prev }; delete n[activeServer.id]; return n; });
-        else setMentionServers(prev => ({ ...prev, [activeServer.id]: totalMentions }));
-
-        if (!hasUnread) setUnreadServers(prev => { const n = { ...prev }; delete n[activeServer.id]; return n; });
-        else setUnreadServers(prev => ({ ...prev, [activeServer.id]: true }));
-      }
     }
-  }, [activeChannel, activeServer, mentionChannels, unreadChannels]);
+  }, [activeChannel?.id]);
+
+  // Sync active server badges based on its channels
+  useEffect(() => {
+    if (activeServer?.id) {
+      let totalMentions = 0;
+      let hasUnread = false;
+      activeServer.categories?.forEach((cat: any) => {
+        cat.channels?.forEach((ch: any) => {
+          totalMentions += mentionChannels[ch.id] || 0;
+          if (unreadChannels[ch.id]) hasUnread = true;
+        });
+      });
+
+      setMentionServers(prev => {
+        if (totalMentions === 0 && prev[activeServer.id] !== undefined) {
+          const n = { ...prev }; delete n[activeServer.id]; return n;
+        } else if (totalMentions > 0 && prev[activeServer.id] !== totalMentions) {
+          return { ...prev, [activeServer.id]: totalMentions };
+        }
+        return prev;
+      });
+
+      setUnreadServers(prev => {
+        if (!hasUnread && prev[activeServer.id] !== undefined) {
+          const n = { ...prev }; delete n[activeServer.id]; return n;
+        } else if (hasUnread && !prev[activeServer.id]) {
+          return { ...prev, [activeServer.id]: true };
+        }
+        return prev;
+      });
+    }
+  }, [activeServer, mentionChannels, unreadChannels]);
 
   const handleViewProfile = (user: any, e?: React.MouseEvent) => {
     setSelectedUser(user);
