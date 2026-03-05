@@ -70,6 +70,27 @@ export async function POST(req: Request) {
       }
     });
 
+    const generalCategory = server.categories.find(c => c.name === 'General');
+    const systemChannel = generalCategory?.channels.find(c => c.name === 'general');
+    const staffCategory = server.categories.find(c => c.name === 'Staff Only');
+    const logChannel = staffCategory?.channels.find(c => c.name === 'staff-chat');
+
+    const updatedServer = await prisma.server.update({
+      where: { id: server.id },
+      data: {
+        systemChannelId: systemChannel?.id,
+        logChannelId: logChannel?.id,
+      },
+      include: {
+        roles: true,
+        categories: {
+          include: {
+            channels: true
+          }
+        }
+      }
+    });
+
     // Assign Creator role to owner
     const creatorRole = server.roles.find(r => r.name === 'Creator');
     if (creatorRole) {
@@ -85,7 +106,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json(server);
+    return NextResponse.json(updatedServer);
   } catch (error) {
     console.error('Error creating server:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

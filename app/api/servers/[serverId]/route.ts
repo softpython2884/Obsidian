@@ -34,10 +34,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ serverId
 export async function PATCH(req: Request, { params }: { params: Promise<{ serverId: string }> }) {
   try {
     const { serverId } = await params;
-    const { name, imageUrl } = await req.json();
+    const { name, imageUrl, systemChannelId, logChannelId } = await req.json();
     const server = await prisma.server.update({
       where: { id: serverId },
-      data: { name, imageUrl },
+      data: { name, imageUrl, systemChannelId, logChannelId },
       include: {
         categories: {
           include: {
