@@ -20,7 +20,7 @@ import { RoleManagementModal } from '@/components/modals/role-management-modal';
 
 interface MemberListProps {
   server: any;
-  onViewProfile: (user: any) => void;
+  onViewProfile: (user: any, e?: React.MouseEvent) => void;
   onStartDM?: (userId: string) => void;
 }
 
@@ -144,7 +144,10 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
         <ContextMenuContent className="w-56 bg-[#111214] border-black/20 text-[#DBDEE1]">
           <ContextMenuItem
             className="focus:bg-[#5865F2] focus:text-white cursor-pointer"
-            onClick={() => onViewProfile(member.user)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewProfile(member.user, e);
+            }}
           >
             <User className="mr-2 h-4 w-4" />
             Profile

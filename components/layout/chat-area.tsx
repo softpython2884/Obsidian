@@ -38,7 +38,7 @@ import { processCommand, commands } from '@/lib/commands'; // Import commands
 interface ChatAreaProps {
   channel: any;
   server?: any;
-  onViewProfile: (user: any) => void;
+  onViewProfile: (user: any, e?: React.MouseEvent) => void;
 }
 
 export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
@@ -464,7 +464,10 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                   {!isCompact ? (
                     <div
                       className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#1a1a1a] cursor-pointer hover:ring-2 hover:ring-white/10 transition-all"
-                      onClick={() => onViewProfile(msg.user)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewProfile(msg.user, e);
+                      }}
                     >
                       {msg.user?.avatarUrl ? (
                         <img src={msg.user.avatarUrl} alt={msg.user.pseudo} className="h-full w-full object-cover" />
@@ -494,7 +497,10 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                               return msg.user?.role === 'ADMIN' ? '#ef4444' : msg.user?.role === 'MODERATOR' ? '#f59e0b' : undefined;
                             })()
                           }}
-                          onClick={() => onViewProfile(msg.user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewProfile(msg.user, e);
+                          }}
                         >
                           {msg.user?.pseudo}
                           {msg.user?.isBot && (

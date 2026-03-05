@@ -17,9 +17,10 @@ interface DMSidebarProps {
   activeChannel: any;
   onSelectChannel: (channel: any) => void;
   onOpenSettings: () => void;
+  onViewProfile?: (user: any, e: React.MouseEvent) => void;
 }
 
-export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DMSidebarProps) => {
+export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings, onViewProfile }: DMSidebarProps) => {
   const { user, logout } = useAuth();
   const [dms, setDms] = useState<any[]>([]);
 
@@ -70,7 +71,15 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings }: DM
                       activeChannel?.id === dm.id ? "bg-white/20 text-white" : "text-[#949BA4] hover:bg-white/10 hover:text-[#DBDEE1]"
                     )}
                   >
-                    <div className="relative mr-3 h-8 w-8 shrink-0">
+                    <div
+                      className="relative mr-3 h-8 w-8 shrink-0 hover:opacity-80 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onViewProfile && otherMember) {
+                          onViewProfile(otherMember, e);
+                        }
+                      }}
+                    >
                       {otherMember?.avatarUrl ? (
                         <img src={otherMember.avatarUrl} alt={otherMember.pseudo} className="h-full w-full rounded-full object-cover" />
                       ) : (
