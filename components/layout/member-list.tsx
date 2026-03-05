@@ -31,12 +31,12 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
   useEffect(() => {
-    if (server) {
+    if (server?.id) {
       fetch(`/api/servers/${server.id}/members`)
         .then((res) => res.json())
         .then((data) => setMembers(data));
     }
-  }, [server]);
+  }, [server?.id]);
 
   const handleUpdateRoles = async (userId: string, roleIds: string[]) => {
     try {
