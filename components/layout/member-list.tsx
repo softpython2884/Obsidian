@@ -62,10 +62,39 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
 
   if (!server) return <div className="hidden w-60 flex-col bg-black/60 backdrop-blur-sm lg:flex" />;
 
-  const admins = members.filter((m) => (m.roles?.some((r: any) => r.permissions === 'ADMIN') || m.userId === server.ownerId) && m.user);
-  const moderators = members.filter((m) => m.roles?.some((r: any) => r.permissions === 'MODERATOR') && m.userId !== server.ownerId && m.user);
-  const onlineMembers = members.filter((m) => (!m.roles?.some((r: any) => r.permissions === 'ADMIN' || r.permissions === 'MODERATOR')) && m.userId !== server.ownerId && m.user?.state !== 'OFFLINE' && m.user?.state !== 'INVISIBLE');
-  const offlineMembers = members.filter((m) => (m.user?.state === 'OFFLINE' || m.user?.state === 'INVISIBLE') && m.user);
+  const { activeGroups, onlineMembers, offlineMembers } = React.useMemo(() => {
+    const groups: { [key: string]: { id: string, name: string, members: any[] } } = {};
+    const online: any[] = [];
+    const offline: any[] = [];
+
+    if (server?.roles) {
+      const sortedRoles = [...server.roles].sort((a: any, b: any) => b.position - a.position);
+      sortedRoles.forEach(role => {
+        groups[role.id] = { id: role.id, name: role.name, members: [] };
+      });
+    }
+
+    members.forEach(m => {
+      if (!m.user) return;
+      if (m.user.state === 'OFFLINE' || m.user.state === 'INVISIBLE') {
+        offline.push(m);
+        return;
+      }
+
+      if (m.roles && m.roles.length > 0) {
+        const highestRole = [...m.roles].sort((a: any, b: any) => b.position - a.position)[0];
+        if (groups[highestRole.id]) {
+          groups[highestRole.id].members.push(m);
+          return;
+        }
+      }
+      online.push(m);
+    });
+
+    const activeGroups = Object.values(groups).filter(g => g.members.length > 0);
+
+    return { activeGroups, onlineMembers: online, offlineMembers: offline };
+  }, [members, server]);
 
   const handleAction = (action: string, member: any) => {
     alert(`${action} ${member.user?.pseudo || 'User'} - Feature coming soon!`);
@@ -184,27 +213,21 @@ export const MemberList = ({ server, onViewProfile, onStartDM }: MemberListProps
     <>
       <div className="hidden w-60 flex-col bg-glass lg:flex border-l border-white/5 backdrop-blur-md">
         <div className="flex-1 overflow-y-auto px-2 py-4 no-scrollbar">
-          {admins.length > 0 && (
-            <div className="mb-4">
-              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Admins — {admins.length}</h3>
-              {admins.map((member) => <MemberItem key={member.id} member={member} />)}
+          {activeGroups.map(group => (
+            <div key={group.id} className="mb-4">
+              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">{group.name} — {group.members.length}</h3>
+              {group.members.map((member) => <MemberItem key={member.id} member={member} />)}
             </div>
-          )}
-          {moderators.length > 0 && (
-            <div className="mb-4">
-              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Moderators — {moderators.length}</h3>
-              {moderators.map((member) => <MemberItem key={member.id} member={member} />)}
-            </div>
-          )}
+          ))}
           {onlineMembers.length > 0 && (
             <div className="mb-4">
-              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Online — {onlineMembers.length}</h3>
+              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">En ligne — {onlineMembers.length}</h3>
               {onlineMembers.map((member) => <MemberItem key={member.id} member={member} />)}
             </div>
           )}
           {offlineMembers.length > 0 && (
             <div className="mb-4">
-              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Offline — {offlineMembers.length}</h3>
+              <h3 className="mb-1 px-2 text-xs font-bold uppercase text-[#949BA4]">Hors ligne — {offlineMembers.length}</h3>
               {offlineMembers.map((member) => <MemberItem key={member.id} member={member} />)}
             </div>
           )}
