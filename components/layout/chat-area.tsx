@@ -754,6 +754,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
               ))}
             </div>
           </div>
+        )}
         {/* Mention Suggestions */}
         {showMentionSuggestions && (
           <div className="absolute bottom-[calc(100%-8px)] left-6 right-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">

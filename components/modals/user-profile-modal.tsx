@@ -157,7 +157,8 @@ export const UserProfileModal = ({ isOpen, onClose, user, onStartDM, coords }: U
               </div>
             </div>
           </div>
+        </div>
       )}
-        </>
-      );
+    </>
+  );
 };
