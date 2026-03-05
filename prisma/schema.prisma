@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,55 +8,50 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  username      String    @unique @default(cuid()) // Unique handle
-  pseudo        String    // Display name
-  avatarUrl     String?
-  bannerUrl     String?
-  bio           String?
-  status        String?   // Custom status message
-  accentColor   String?   // Hex color code
-  socialLinks   String?   // JSON string of social links
-  state         String    @default("ONLINE") // ONLINE, IDLE, DND, INVISIBLE
-  role          String    @default("MEMBER") // Global role: ADMIN, MODERATOR, MEMBER
-  isHost        Boolean   @default(false)
-  publicKey     String?
-  privateKey    String?   // Encrypted with MASTER_ENCRYPTION_KEY
-  isBanned      Boolean   @default(false)
-  banExpiresAt  DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  messages      Message[]
-  reactions     Reaction[]
-  servers       ServerMember[]
-  ownedServers  Server[]
-  channels      Channel[] @relation("ChannelMembers")
-  
-  friends       User[]    @relation("UserFriends")
-  friendOf      User[]    @relation("UserFriends")
-  
-  bans          ServerBan[]
+  id           String         @id @default(uuid())
+  username     String         @unique @default(cuid())
+  pseudo       String
+  avatarUrl    String?
+  bannerUrl    String?
+  bio          String?
+  status       String?
+  accentColor  String?
+  socialLinks  String?
+  state        String         @default("ONLINE")
+  role         String         @default("MEMBER")
+  isHost       Boolean        @default(false)
+  publicKey    String?
+  privateKey   String?
+  isBanned     Boolean        @default(false)
+  banExpiresAt DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  messages     Message[]
+  reactions    Reaction[]
+  ownedServers Server[]
+  bans         ServerBan[]
+  servers      ServerMember[]
+  channels     Channel[]      @relation("ChannelMembers")
+  User_A       User[]         @relation("UserFriends")
+  User_B       User[]         @relation("UserFriends")
 }
 
 model Server {
-  id          String    @id @default(uuid())
-  name        String
-  imageUrl    String?
-  inviteCode  String    @unique @default(cuid())
-  isInviteCodeVisible Boolean @default(true)
-  ownerId     String
-  owner       User      @relation(fields: [ownerId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  categories  Category[]
-  members     ServerMember[]
-  roles       Role[]
-  bans        ServerBan[]
-  
-  systemChannelId String?
-  logChannelId    String?
+  id                  String         @id @default(uuid())
+  name                String
+  imageUrl            String?
+  inviteCode          String         @unique @default(cuid())
+  isInviteCodeVisible Boolean        @default(true)
+  ownerId             String
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  systemChannelId     String?
+  logChannelId        String?
+  categories          Category[]
+  roles               Role[]
+  owner               User           @relation(fields: [ownerId], references: [id])
+  bans                ServerBan[]
+  members             ServerMember[]
 }
 
 model ServerBan {
@@ -68,81 +60,75 @@ model ServerBan {
   serverId  String
   reason    String?
   createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id])
   server    Server   @relation(fields: [serverId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, serverId])
 }
 
 model Role {
-  id          String    @id @default(uuid())
-  name        String
-  color       String    @default("#99AAB5") // Hex or Gradient
-  position    Int       @default(0)
-  permissions String    @default("VIEW_CHANNELS") // JSON string of permissions
-  iconUrl     String?
-  serverId    String
-  server      Server    @relation(fields: [serverId], references: [id], onDelete: Cascade)
-  members     ServerMember[]
-  allowedChannels Channel[] @relation("ChannelRoles")
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id              String         @id @default(uuid())
+  name            String
+  color           String         @default("#99AAB5")
+  position        Int            @default(0)
+  permissions     String         @default("VIEW_CHANNELS")
+  iconUrl         String?
+  serverId        String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  server          Server         @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  allowedChannels Channel[]      @relation("ChannelRoles")
+  members         ServerMember[] @relation("RoleToServerMember")
 }
 
 model ServerMember {
-  id        String   @id @default(uuid())
-  userId    String
-  serverId  String
-  // Deprecated: use roles relation instead
-  role      String   @default("MEMBER") 
-  
-  user      User     @relation(fields: [userId], references: [id])
-  server    Server   @relation(fields: [serverId], references: [id])
-  roles     Role[]
-  
-  joinedAt  DateTime @default(now())
+  id       String   @id @default(uuid())
+  userId   String
+  serverId String
+  role     String   @default("MEMBER")
+  joinedAt DateTime @default(now())
+  server   Server   @relation(fields: [serverId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  roles    Role[]   @relation("RoleToServerMember")
 
   @@unique([userId, serverId])
 }
 
 model Category {
-  id        String    @id @default(uuid())
-  name      String
-  serverId  String
-  server    Server    @relation(fields: [serverId], references: [id])
-  channels  Channel[]
+  id       String    @id @default(uuid())
+  name     String
+  serverId String
+  server   Server    @relation(fields: [serverId], references: [id])
+  channels Channel[]
 }
 
 model Channel {
-  id          String    @id @default(uuid())
-  name        String
-  type        String    @default("TEXT") // TEXT, VOICE, DM
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id])
-  messages    Message[]
-  members     User[]    @relation("ChannelMembers")
-  allowedRoles Role[]   @relation("ChannelRoles")
-  isPrivate    Boolean  @default(false)
+  id           String    @id @default(uuid())
+  name         String
+  type         String    @default("TEXT")
+  categoryId   String?
+  isPrivate    Boolean   @default(false)
+  category     Category? @relation(fields: [categoryId], references: [id])
+  messages     Message[]
+  members      User[]    @relation("ChannelMembers")
+  allowedRoles Role[]    @relation("ChannelRoles")
 }
 
 model Message {
-  id          String    @id @default(uuid())
-  content     String    // Encrypted content
-  isEmbed     Boolean   @default(false)
-  embedData   String?   // JSON string of embed data
-  gifUrl      String?
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  channelId   String
-  channel     Channel   @relation(fields: [channelId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @default(now()) @updatedAt
-  reactions   Reaction[]
-  
-  isForwarded   Boolean   @default(false)
-  forwardedFrom String?   // ID or Link of the original message
+  id            String     @id @default(uuid())
+  content       String
+  isEmbed       Boolean    @default(false)
+  embedData     String?
+  gifUrl        String?
+  userId        String
+  channelId     String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @default(now()) @updatedAt
+  isForwarded   Boolean    @default(false)
+  forwardedFrom String?
+  channel       Channel    @relation(fields: [channelId], references: [id])
+  user          User       @relation(fields: [userId], references: [id])
+  reactions     Reaction[]
 }
 
 model Reaction {
@@ -150,9 +136,9 @@ model Reaction {
   emoji     String
   messageId String
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  message   Message  @relation(fields: [messageId], references: [id])
   createdAt DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([messageId, userId, emoji])
 }
