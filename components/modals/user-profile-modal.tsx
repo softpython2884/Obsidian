@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Shield, Github, Youtube, Globe, MessageSquare } from 'lucide-react';
-import { Shield, Github, Youtube, Globe, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface UserProfileModalProps {
@@ -158,7 +157,7 @@ export const UserProfileModal = ({ isOpen, onClose, user, onStartDM, coords }: U
               </div>
             </div>
           </div>
-        </div>
-    </>
-  );
+      )}
+        </>
+      );
 };
