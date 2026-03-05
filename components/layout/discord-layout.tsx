@@ -24,6 +24,19 @@ export const DiscordLayout = () => {
   const [isServerSettingsModalOpen, setIsServerSettingsModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [profileCoords, setProfileCoords] = useState<{ x: number, y: number } | null>(null);
+
+  const handleViewProfile = (user: any, e?: React.MouseEvent) => {
+    setSelectedUser(user);
+    if (e) {
+      // Calculate position to avoid overflowing screen
+      const x = Math.min(e.clientX, window.innerWidth - 350);
+      const y = Math.min(e.clientY, window.innerHeight - 450);
+      setProfileCoords({ x, y });
+    } else {
+      setProfileCoords(null);
+    }
+  };
 
   useEffect(() => {
     // Temporary fix for existing messages showing as edited
@@ -214,13 +227,13 @@ export const DiscordLayout = () => {
           <ChatArea
             channel={activeChannel}
             server={activeServer}
-            onViewProfile={setSelectedUser}
+            onViewProfile={handleViewProfile}
           />
 
           {/* Member List */}
           <MemberList
             server={activeServer}
-            onViewProfile={setSelectedUser}
+            onViewProfile={handleViewProfile}
             onStartDM={handleStartDM}
           />
         </>
@@ -230,11 +243,12 @@ export const DiscordLayout = () => {
             activeChannel={activeChannel}
             onSelectChannel={setActiveChannel}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
+            onViewProfile={handleViewProfile}
           />
           {activeChannel ? (
             <ChatArea
               channel={activeChannel}
-              onViewProfile={setSelectedUser}
+              onViewProfile={handleViewProfile}
             />
           ) : (
             <DMView onStartDM={handleStartDM} />
@@ -262,6 +276,7 @@ export const DiscordLayout = () => {
         onClose={() => setSelectedUser(null)}
         user={selectedUser}
         onStartDM={handleStartDM}
+        coords={profileCoords}
       />
 
       {/* Server Settings Modal */}

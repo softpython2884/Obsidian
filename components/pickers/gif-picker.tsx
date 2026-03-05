@@ -3,7 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || "dc6zaTOxFJmzC";
+const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || "GlVGYHqc3SyCEGnwOhP7wbn2HtcEexkS";
 
 const CATEGORIES = [
   { id: 'trending', name: 'Trending' },

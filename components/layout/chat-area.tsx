@@ -151,6 +151,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: '',
+          userId: user.id,
           channelId: channel.id,
           isEmbed: true,
           embedData: embedData,
@@ -206,6 +207,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: '',
+          userId: user.id,
           channelId: channel.id,
           gifUrl,
         }),
@@ -673,14 +675,15 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
       <div className="shrink-0 px-6 pb-6 pt-2 bg-transparent relative">
         {/* Command Suggestions */}
         {showSuggestions && (
-          <div className="absolute bottom-[calc(100%-8px)] left-6 right-6 bg-[#1e1f22] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="absolute bottom-[calc(100%-8px)] left-6 right-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <div className="p-2 border-b border-white/5 bg-black/20">
               <span className="text-[10px] font-bold uppercase text-white/40 tracking-widest pl-2">Available Commands</span>
             </div>
-            <div className="max-h-60 overflow-y-auto no-scrollbar">
+            <div className="max-h-60 overflow-y-auto custom-scrollbar" id="commands-scroll-container">
               {filteredCommands.map((cmd, index) => (
                 <div
                   key={cmd.name}
+                  id={`cmd-suggest-${index}`}
                   className={cn(
                     "px-4 py-3 flex items-center justify-between cursor-pointer transition-colors",
                     index === suggestionIndex ? "bg-[#5865f2] text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
@@ -742,10 +745,18 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                 if (showSuggestions) {
                   if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    setSuggestionIndex((prev) => (prev + 1) % filteredCommands.length);
+                    setSuggestionIndex((prev) => {
+                      const next = (prev + 1) % filteredCommands.length;
+                      document.getElementById(`cmd-suggest-${next}`)?.scrollIntoView({ block: 'nearest' });
+                      return next;
+                    });
                   } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    setSuggestionIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+                    setSuggestionIndex((prev) => {
+                      const prevIdx = (prev - 1 + filteredCommands.length) % filteredCommands.length;
+                      document.getElementById(`cmd-suggest-${prevIdx}`)?.scrollIntoView({ block: 'nearest' });
+                      return prevIdx;
+                    });
                   } else if (e.key === 'Enter' || e.key === 'Tab') {
                     e.preventDefault();
                     selectSuggestion(filteredCommands[suggestionIndex]);
