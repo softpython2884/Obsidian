@@ -110,8 +110,10 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
   }, [channel, socket]);
 
   useEffect(() => {
-    if (socket) {
-      socket.on('new-message', (message: any) => {
+    if (socket && channel) {
+      const handleNewMessage = (message: any) => {
+        if (message.channelId !== channel.id) return;
+        
         const decryptedMsg = {
           ...message,
           content: decrypt(message.content)
@@ -123,22 +125,26 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
         } else {
           setShowNewMessages(true);
         }
-      });
+      };
 
-      socket.on('user-typing', (data: any) => {
+      const handleUserTyping = (data: any) => {
+        if (data.channelId !== channel.id) return;
         if (data.isTyping) {
           setTypingUsers((prev) => Array.from(new Set([...prev, data.pseudo])));
         } else {
           setTypingUsers((prev) => prev.filter((u) => u !== data.pseudo));
         }
-      });
+      };
+
+      socket.on('new-message', handleNewMessage);
+      socket.on('user-typing', handleUserTyping);
 
       return () => {
-        socket.off('new-message');
-        socket.off('user-typing');
+        socket.off('new-message', handleNewMessage);
+        socket.off('user-typing', handleUserTyping);
       };
     }
-  }, [socket, isNearBottom]);
+  }, [socket, channel?.id, isNearBottom]);
 
   useEffect(() => {
     // Scroll to bottom on initial load
