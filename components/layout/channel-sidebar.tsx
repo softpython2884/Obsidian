@@ -28,9 +28,11 @@ interface ChannelSidebarProps {
   onOpenSettings: () => void;
   onOpenServerSettings?: () => void;
   onLeaveServer?: () => void;
+  unreadChannels?: Record<string, boolean>;
+  mentionChannels?: Record<string, number>;
 }
 
-export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenSettings, onOpenServerSettings, onLeaveServer }: ChannelSidebarProps) => {
+export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenSettings, onOpenServerSettings, onLeaveServer, unreadChannels, mentionChannels }: ChannelSidebarProps) => {
   const { user, logout } = useAuth();
   const [isMicMuted, setIsMicMuted] = React.useState(false);
   const [isDeafened, setIsDeafened] = React.useState(false);
@@ -156,7 +158,15 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
                           <Hash size={16} className={cn("mr-2", activeChannel?.id === channel.id ? "text-white/60" : "text-white/20 group-hover:text-white/40")} />
                         )
                       )}
-                      <span className={cn("truncate text-sm font-medium", activeChannel?.id === channel.id ? "text-white" : "text-white/60 group-hover:text-white/90")}>{channel.name}</span>
+                      <span className={cn("truncate text-sm font-medium flex-1", activeChannel?.id === channel.id || unreadChannels?.[channel.id] ? "text-white" : "text-white/60 group-hover:text-white/90")}>{channel.name}</span>
+                      {mentionChannels?.[channel.id] > 0 && (
+                        <div className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#f23f43] px-1 text-[10px] font-bold text-white shadow-sm ml-2">
+                          {mentionChannels[channel.id] > 99 ? '99+' : mentionChannels[channel.id]}
+                        </div>
+                      )}
+                      {unreadChannels?.[channel.id] && !mentionChannels?.[channel.id] && activeChannel?.id !== channel.id && (
+                        <div className="h-1.5 w-1.5 rounded-full bg-white ml-2 shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                      )}
                       {((server.ownerId === user?.id || isAdmin) && activeChannel?.id !== channel.id) && (
                         <Settings
                           size={12}

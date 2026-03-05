@@ -18,9 +18,11 @@ interface DMSidebarProps {
   onSelectChannel: (channel: any) => void;
   onOpenSettings: () => void;
   onViewProfile?: (user: any, e: React.MouseEvent) => void;
+  unreadChannels?: Record<string, boolean>;
+  mentionChannels?: Record<string, number>;
 }
 
-export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings, onViewProfile }: DMSidebarProps) => {
+export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings, onViewProfile, unreadChannels, mentionChannels }: DMSidebarProps) => {
   const { user, logout } = useAuth();
   const [dms, setDms] = useState<any[]>([]);
 
@@ -94,8 +96,8 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings, onVi
                             otherMember?.state === 'DND' ? "bg-[#F23F43]" : "bg-[#80848E]"
                       )} />
                     </div>
-                    <div className="flex flex-col overflow-hidden text-left">
-                      <span className="truncate font-medium text-[#DBDEE1] group-hover:text-white">
+                    <div className="flex flex-col overflow-hidden text-left flex-1">
+                      <span className={cn("truncate font-medium group-hover:text-white", unreadChannels?.[dm.id] ? "text-white" : "text-[#DBDEE1]")}>
                         {otherMember?.pseudo || 'Unknown User'}
                       </span>
                       {dm.messages?.[0] && (
@@ -104,6 +106,14 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings, onVi
                         </span>
                       )}
                     </div>
+                    {mentionChannels?.[dm.id] > 0 && (
+                      <div className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#f23f43] px-1 text-[10px] font-bold text-white shadow-sm ml-2">
+                        {mentionChannels[dm.id] > 99 ? '99+' : mentionChannels[dm.id]}
+                      </div>
+                    )}
+                    {unreadChannels?.[dm.id] && !mentionChannels?.[dm.id] && activeChannel?.id !== dm.id && (
+                      <div className="h-1.5 w-1.5 rounded-full bg-white ml-2 shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                    )}
                     <div className="ml-auto hidden group-hover:block text-[#B5BAC1] hover:text-white">
                       <X size={14} onClick={(e) => { e.stopPropagation(); /* Handle close DM */ }} />
                     </div>
