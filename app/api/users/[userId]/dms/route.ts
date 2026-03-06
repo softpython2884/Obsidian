@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { decrypt } from '@/lib/encryption';
 
 export async function GET(
   request: Request,
@@ -28,7 +29,16 @@ export async function GET(
       }
     });
 
-    return NextResponse.json(dms);
+    // Decrypt message content for preview
+    const dmsWithDecryptedMessages = dms.map(dm => ({
+      ...dm,
+      messages: dm.messages.map(msg => ({
+        ...msg,
+        content: msg.content ? decrypt(msg.content) : msg.content
+      }))
+    }));
+
+    return NextResponse.json(dmsWithDecryptedMessages);
   } catch (error) {
     console.error('Error fetching DMs:', error);
     return NextResponse.json({ error: 'Failed to fetch DMs' }, { status: 500 });

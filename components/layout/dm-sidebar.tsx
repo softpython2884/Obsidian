@@ -5,6 +5,7 @@ import { MessageSquare, Settings, UserPlus, X, LogOut, User, UserX, Trash2, Copy
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
+import { decrypt } from '@/lib/encryption';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -102,7 +103,18 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings, onVi
                       </span>
                       {dm.messages?.[0] && (
                         <span className="truncate text-xs text-[#949BA4]">
-                          {dm.messages[0].content ? 'Message' : 'Sent an attachment'}
+                          {dm.messages[0].content ? (
+                            (() => {
+                              try {
+                                const decryptedContent = decrypt(dm.messages[0].content);
+                                return decryptedContent.length > 30 
+                                  ? decryptedContent.substring(0, 30) + '...' 
+                                  : decryptedContent;
+                              } catch {
+                                return 'Message';
+                              }
+                            })()
+                          ) : dm.messages[0].gifUrl ? 'GIF' : dm.messages[0].isEmbed ? 'Embed' : 'Attachment'}
                         </span>
                       )}
                     </div>

@@ -4,7 +4,7 @@ import { encrypt } from '@/lib/encryption';
 
 export async function POST(req: Request) {
   try {
-    const { content, userId, channelId, gifUrl, isEmbed, embedData, isForwarded, forwardedFrom } = await req.json();
+    const { content, userId, channelId, gifUrl, isEmbed, embedData, isForwarded, forwardedFrom, mentionedUsers } = await req.json();
 
     const encryptedContent = content ? encrypt(content) : "";
 
@@ -36,6 +36,13 @@ export async function POST(req: Request) {
         }
       }
     });
+
+    // If there are mentioned users, we could trigger notifications here
+    // This would be enhanced with a proper notification system
+    if (mentionedUsers && mentionedUsers.length > 0) {
+      console.log(`Message mentions users: ${mentionedUsers.join(', ')}`);
+      // TODO: Implement proper notification system for mentions
+    }
 
     return NextResponse.json(message);
   } catch (error) {

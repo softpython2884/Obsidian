@@ -37,7 +37,15 @@ export const DiscordLayout = () => {
   useEffect(() => {
     if (!socket || !user) return;
     const handleNewMessage = (msg: any) => {
-      if (activeChannel?.id === msg.channelId) return; // Ignore if we are in the channel
+      // Only handle notifications if we're not currently in that channel
+      if (activeChannel?.id === msg.channelId) return;
+
+      // Check if this message is relevant to the user (DM or server they're part of)
+      const isRelevant = servers.some(s => 
+        s.categories?.some((c: any) => c.channels?.some((ch: any) => ch.id === msg.channelId))
+      );
+
+      if (!isRelevant) return; // Ignore messages from channels user doesn't have access to
 
       const isMentioned = msg.content && (msg.content.includes(`@${user.pseudo}`) || msg.content.includes(`<@${user.id}>`));
 

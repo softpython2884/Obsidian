@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useSocket } from '@/components/providers/socket-provider';
 import { toast } from 'sonner';
+import { Circle, Moon, X, Minus } from 'lucide-react';
 
 interface UserSettingsModalProps {
   isOpen: boolean;
@@ -12,6 +14,7 @@ interface UserSettingsModalProps {
 
 export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) => {
   const { user, updateUser } = useAuth();
+  const { updateStatus } = useSocket();
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -21,8 +24,16 @@ export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) =
     accentColor: user?.accentColor || '#5865F2',
     bio: user?.bio || '',
     status: user?.status || '',
+    state: user?.state || 'ONLINE',
     socialLinks: user?.socialLinks ? JSON.parse(user.socialLinks) : { github: '', youtube: '', website: '' },
   });
+
+  const statusOptions = [
+    { value: 'ONLINE', label: 'Online', color: '#23A559', icon: Circle },
+    { value: 'IDLE', label: 'Idle', color: '#F0B232', icon: Moon },
+    { value: 'DND', label: 'Do Not Disturb', color: '#F23F43', icon: X },
+    { value: 'INVISIBLE', label: 'Invisible', color: '#80848E', icon: Minus },
+  ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -35,6 +46,12 @@ export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) =
       ...prev,
       socialLinks: { ...prev.socialLinks, [name]: value }
     }));
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    setFormData(prev => ({ ...prev, state: newStatus }));
+    // Update status immediately via socket
+    updateStatus(newStatus);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,6 +148,38 @@ export const UserSettingsModal = ({ isOpen, onClose }: UserSettingsModalProps) =
                 placeholder="https://example.com/banner.png"
                 className="w-full bg-[#1E1F22] text-white p-2 rounded border border-[#1E1F22] focus:border-[#5865F2] outline-none transition-colors"
               />
+            </div>
+          </div>
+
+          <div className="h-[1px] bg-[#3F4147] w-full" />
+
+          {/* Status Section */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold uppercase text-[#B5BAC1]">Status</h3>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {statusOptions.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleStatusChange(option.value)}
+                    className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
+                      formData.state === option.value
+                        ? 'bg-[#5865F2] border-[#5865F2] text-white'
+                        : 'bg-[#1E1F22] border-[#3F4147] text-[#DBDEE1] hover:border-[#5865F2]'
+                    }`}
+                  >
+                    <div 
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: option.color }}
+                    />
+                    <Icon size={16} className="flex-shrink-0" />
+                    <span className="font-medium">{option.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

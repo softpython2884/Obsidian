@@ -7,6 +7,7 @@ import { useSocket } from '@/components/providers/socket-provider';
 import { decrypt } from '@/lib/encryption';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -241,6 +242,41 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
     setInputValue('');
     scrollToBottom();
 
+    // Process mentions in the message
+    let processedContent = content;
+    const mentionedUsers: string[] = [];
+    
+    // Find all @username mentions and extract user IDs
+    const mentionRegex = /@(\w+)/g;
+    const mentions = content.match(mentionRegex);
+    
+    if (mentions) {
+      mentions.forEach(mention => {
+        const username = mention.slice(1); // Remove @
+        
+        // For DM channels, check if we're mentioning the other user
+        if (channel.type === 'DM' && channel.members) {
+          const otherMember = channel.members.find((m: any) => m.id !== user?.id);
+          if (otherMember && otherMember.pseudo?.toLowerCase() === username.toLowerCase()) {
+            mentionedUsers.push(otherMember.id);
+            processedContent = processedContent.replace(mention, `<@${otherMember.id}>`);
+          }
+        }
+        // For server channels, check server members
+        else if (server?.members) {
+          const mentionedMember = server.members.find((m: any) => 
+            m.user?.pseudo?.toLowerCase() === username.toLowerCase()
+          );
+          
+          if (mentionedMember?.user?.id) {
+            mentionedUsers.push(mentionedMember.user.id);
+            // Replace @username with @user_id for proper processing
+            processedContent = processedContent.replace(mention, `<@${mentionedMember.user.id}>`);
+          }
+        }
+      });
+    }
+
     // Handle commands
     if (content.startsWith('/')) {
       const result = await processCommand(content, { setMessages, user, channel, socket });
@@ -287,9 +323,10 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content,
+        content: processedContent,
         userId: user.id,
         channelId: channel.id,
+        mentionedUsers, // Send mentioned users for notification processing
       }),
     });
 
