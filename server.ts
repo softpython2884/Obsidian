@@ -2,11 +2,105 @@ import { createServer } from "http";
 import { parse } from "url";
 import next from "next";
 import { Server, Socket } from "socket.io";
-import { StatusManager, UserStatus } from "./lib/status-manager";
 
 // Extend Socket interface to include custom properties
 interface ExtendedSocket extends Socket {
   userId?: string;
+}
+
+// Types pour le status manager
+type UserStatus = 'ONLINE' | 'IDLE' | 'DND' | 'OFFLINE' | 'INVISIBLE';
+
+interface StatusData {
+  userId: string;
+  status: UserStatus;
+  lastSeen: Date;
+}
+
+// Status Manager simplifié inline
+class StatusManager {
+  private static instance: StatusManager;
+  private statusMap: Map<string, StatusData> = new Map();
+  private heartbeatIntervals: Map<string, NodeJS.Timeout> = new Map();
+  private readonly HEARTBEAT_INTERVAL = 5 * 60 * 1000; // 5 minutes
+  private readonly OFFLINE_TIMEOUT = 15 * 60 * 1000; // 15 minutes without heartbeat
+
+  static getInstance(): StatusManager {
+    if (!StatusManager.instance) {
+      StatusManager.instance = new StatusManager();
+    }
+    return StatusManager.instance;
+  }
+
+  registerUser(userId: string, initialStatus: UserStatus = 'ONLINE'): void {
+    const statusData: StatusData = {
+      userId,
+      status: initialStatus,
+      lastSeen: new Date()
+    };
+    this.statusMap.set(userId, statusData);
+    this.startHeartbeat(userId);
+  }
+
+  unregisterUser(userId: string): void {
+    this.stopHeartbeat(userId);
+    this.updateStatus(userId, 'OFFLINE');
+  }
+
+  updateStatus(userId: string, status: UserStatus): void {
+    const current = this.statusMap.get(userId);
+    if (current) {
+      current.status = status;
+      current.lastSeen = new Date();
+      this.statusMap.set(userId, current);
+    }
+  }
+
+  recordActivity(userId: string): void {
+    const current = this.statusMap.get(userId);
+    if (current && current.status !== 'DND' && current.status !== 'INVISIBLE') {
+      current.status = 'ONLINE';
+      current.lastSeen = new Date();
+      this.statusMap.set(userId, current);
+    }
+  }
+
+  getStatus(userId: string): UserStatus | null {
+    const statusData = this.statusMap.get(userId);
+    if (!statusData) return null;
+
+    const timeSinceLastSeen = Date.now() - statusData.lastSeen.getTime();
+    if (timeSinceLastSeen > this.OFFLINE_TIMEOUT && statusData.status !== 'INVISIBLE') {
+      statusData.status = 'OFFLINE';
+      this.statusMap.set(userId, statusData);
+    }
+
+    return statusData.status;
+  }
+
+  getAllStatuses(): Map<string, UserStatus> {
+    const result = new Map<string, UserStatus>();
+    this.statusMap.forEach((statusData, userId) => {
+      result.set(userId, this.getStatus(userId) || 'OFFLINE');
+    });
+    return result;
+  }
+
+  private startHeartbeat(userId: string): void {
+    this.stopHeartbeat(userId);
+    const interval = setInterval(() => {
+      this.updateStatus(userId, this.getStatus(userId) || 'OFFLINE');
+    }, this.HEARTBEAT_INTERVAL);
+    this.heartbeatIntervals.set(userId, interval);
+  }
+
+  private stopHeartbeat(userId: string): void {
+    const interval = this.heartbeatIntervals.get(userId);
+    if (interval) {
+      clearInterval(interval);
+      this.heartbeatIntervals.delete(userId);
+    }
+  }
 }
 
 const dev = process.env.NODE_ENV !== "production";
