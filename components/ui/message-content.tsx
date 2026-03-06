@@ -58,7 +58,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
             }
           };
           
-          return React.cloneElement(element, {
+          return React.cloneElement(element as React.ReactElement<any>, {
             key: `mention-${index}`,
             onClick: handleClick
           });
@@ -72,7 +72,6 @@ export const MessageContent: React.FC<MessageContentProps> = ({
       return (
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkBreaks]}
-          className="markdown-content"
           components={{
             a: ({ href, children, ...props }) => (
               <a
