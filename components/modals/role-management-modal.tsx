@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Shield, Check } from 'lucide-react';
+import { Shield, Check, Edit, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RoleEditorModal } from './role-editor-modal';
 
 interface RoleManagementModalProps {
   isOpen: boolean;
@@ -15,6 +16,8 @@ interface RoleManagementModalProps {
 
 export const RoleManagementModal = ({ isOpen, onClose, user, member, serverRoles, onUpdateRoles }: RoleManagementModalProps) => {
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [isRoleEditorOpen, setIsRoleEditorOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<any>(null);
 
   useEffect(() => {
     if (member?.roles) {
@@ -35,6 +38,19 @@ export const RoleManagementModal = ({ isOpen, onClose, user, member, serverRoles
   const handleSave = () => {
     onUpdateRoles(user.id, selectedRoleIds);
     onClose();
+  };
+
+  const handleEditRole = (role: any) => {
+    setEditingRole(role);
+    setIsRoleEditorOpen(true);
+  };
+
+  const handleSaveRole = (updatedRole: any) => {
+    // Mettre à jour le rôle dans serverRoles
+    // Cette fonction sera passée au composant parent
+    console.log('Role updated:', updatedRole);
+    setIsRoleEditorOpen(false);
+    setEditingRole(null);
   };
 
   if (!user || !member) return null;
@@ -72,15 +88,23 @@ export const RoleManagementModal = ({ isOpen, onClose, user, member, serverRoles
                     {role.name}
                   </span>
                 </div>
-                <div className={cn(
-                  "w-5 h-5 border-2 rounded flex items-center justify-center transition-all",
-                  selectedRoleIds.includes(role.id)
-                    ? "bg-[#5865F2] border-[#5865F2]"
-                    : "border-[#4E5058]"
-                )}>
-                  {selectedRoleIds.includes(role.id) && <Check size={14} className="text-white" />}
+                <div className="flex items-center gap-1">
+                  <div className={cn(
+                    "w-5 h-5 border-2 rounded flex items-center justify-center transition-all",
+                    selectedRoleIds.includes(role.id)
+                      ? "bg-[#5865F2] border-[#5865F2]"
+                      : "border-[#4E5058]"
+                  )}>
+                    {selectedRoleIds.includes(role.id) && <Check size={14} className="text-white" />}
+                  </div>
+                  <button
+                    onClick={() => handleEditRole(role)}
+                    className="p-1 hover:bg-white/10 rounded transition-colors"
+                    title="Éditer le rôle"
+                  >
+                    <Edit size={12} className="text-[#B5BAC1]" />
+                  </button>
                 </div>
-              </div>
             ))}
           </div>
         </ScrollArea>
@@ -103,5 +127,19 @@ export const RoleManagementModal = ({ isOpen, onClose, user, member, serverRoles
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Modal d'édition de rôle */}
+    {editingRole && (
+      <RoleEditorModal
+        isOpen={isRoleEditorOpen}
+        onClose={() => {
+          setIsRoleEditorOpen(false);
+          setEditingRole(null);
+        }}
+        role={editingRole}
+        serverRoles={serverRoles}
+        onSaveRole={handleSaveRole}
+      />
+    )}
   );
 };

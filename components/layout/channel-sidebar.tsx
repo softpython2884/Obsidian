@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus, LogOut, Trash2, Volume2, Lock, Copy } from 'lucide-react';
+import { Hash, ChevronDown, Settings, Mic, Headphones, Settings2, Shield, UserPlus, LogOut, Trash2, Volume2, Lock, Copy, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
+import { ChannelPermissionsModal } from '@/components/modals/channel-permissions-modal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +37,8 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
   const { user, logout } = useAuth();
   const [isMicMuted, setIsMicMuted] = React.useState(false);
   const [isDeafened, setIsDeafened] = React.useState(false);
+  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = React.useState(false);
+  const [selectedChannel, setSelectedChannel] = React.useState<any>(null);
 
   if (!server) {
     return (
@@ -158,7 +161,7 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
                           <Hash size={16} className={cn("mr-2", activeChannel?.id === channel.id ? "text-white/60" : "text-white/20 group-hover:text-white/40")} />
                         )
                       )}
-                      <span className={cn("truncate text-sm font-medium flex-1", activeChannel?.id === channel.id || unreadChannels?.[channel.id] ? "text-white" : "text-white/60 group-hover:text-white/90")}>{channel.name}</span>
+                      <span className={cn("truncate text-sm flex-1", activeChannel?.id === channel.id || unreadChannels?.[channel.id] ? "text-white font-bold" : "text-white/60 group-hover:text-white/90")}>{channel.name}</span>
                       {mentionChannels?.[channel.id] > 0 && (
                         <div className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#f23f43] px-1 text-[10px] font-bold text-white shadow-sm ml-2">
                           {mentionChannels[channel.id] > 99 ? '99+' : mentionChannels[channel.id]}
@@ -188,6 +191,16 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
                         >
                           <Settings size={14} className="mr-2" />
                           Edit Channel
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          className="hover:bg-[#4752C4] hover:text-white cursor-pointer"
+                          onClick={() => {
+                            setSelectedChannel(channel);
+                            setIsPermissionsModalOpen(true);
+                          }}
+                        >
+                          <Shield size={14} className="mr-2" />
+                          Permissions
                         </ContextMenuItem>
                         <ContextMenuItem
                           className="text-red-400 hover:bg-red-500 hover:text-white cursor-pointer"
@@ -280,6 +293,41 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
           </div>
         </div>
       </div>
-    </div >
+
+      {/* Modal de permissions de canal */}
+      {selectedChannel && (
+        <ChannelPermissionsModal
+          isOpen={isPermissionsModalOpen}
+          onClose={() => {
+            setIsPermissionsModalOpen(false);
+            setSelectedChannel(null);
+          }}
+          channel={selectedChannel}
+          server={server}
+          serverRoles={server.roles || []}
+          serverMembers={server.members || []}
+          onUpdatePermissions={async (channelId, permissions) => {
+            try {
+              const response = await fetch(`/api/servers/${server.id}/channels/${channelId}/permissions`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(permissions)
+              });
+              
+              if (response.ok) {
+                toast.success('Permissions du canal mises à jour');
+                // Recharger les données du serveur
+                onOpenServerSettings?.();
+              } else {
+                toast.error('Erreur lors de la mise à jour des permissions');
+              }
+            } catch (error) {
+              console.error('Error updating channel permissions:', error);
+              toast.error('Erreur lors de la mise à jour des permissions');
+            }
+          }}
+        />
+      )}
+    </div>
   );
 };

@@ -13,6 +13,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import { LinkParser } from '@/components/ui/link-parser';
+import { MentionBadge, useMentionParser } from '@/components/ui/mention-badge';
+import { MessageContent } from '@/components/ui/message-content';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -70,6 +72,9 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Hook pour parser les mentions
+  const { parseMentions } = useMentionParser();
 
   // ... (keep existing scroll logic and useEffects for fetching messages/socket)
 
@@ -624,8 +629,13 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                           </div>
                         )}
 
-                        {/* Utiliser LinkParser pour le contenu avec liens */}
-                        <LinkParser content={msg.content} />
+                        {/* Utiliser MessageContent pour parser mentions et liens */}
+                        <MessageContent 
+                          content={msg.content} 
+                          members={channel?.members || []}
+                          server={server}
+                          onViewProfile={onViewProfile}
+                        />
                         
                         {msg.updatedAt !== msg.createdAt && <span className="text-[10px] text-white/30 ml-1 select-none">(edited)</span>}
 
