@@ -12,6 +12,7 @@ import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+import { LinkParser } from '@/components/ui/link-parser';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -623,7 +624,9 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                           </div>
                         )}
 
-                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{msg.content}</ReactMarkdown>
+                        {/* Utiliser LinkParser pour le contenu avec liens */}
+                        <LinkParser content={msg.content} />
+                        
                         {msg.updatedAt !== msg.createdAt && <span className="text-[10px] text-white/30 ml-1 select-none">(edited)</span>}
 
                         {msg.isEmbed && msg.embedData && (() => {
@@ -634,7 +637,7 @@ export const ChatArea = ({ channel, server, onViewProfile }: ChatAreaProps) => {
                                 <div className="h-1 w-full" style={{ backgroundColor: embed.color || '#5865F2' }} />
                                 <div className="p-4">
                                   {embed.title && <h4 className="font-bold text-white mb-2">{embed.title}</h4>}
-                                  {embed.description && <div className="text-sm text-white/70 whitespace-pre-wrap leading-relaxed"><ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{embed.description}</ReactMarkdown></div>}
+                                  {embed.description && <div className="text-sm text-white/70 whitespace-pre-wrap leading-relaxed"><LinkParser content={embed.description} /></div>}
                                   {embed.image?.url && <img src={embed.image.url} alt="Embed" className="mt-3 rounded-lg max-h-60 object-cover w-full" />}
                                   {embed.footer?.text && <div className="text-[10px] text-white/30 mt-3 pt-3 border-t border-white/5">{embed.footer.text}</div>}
                                 </div>
