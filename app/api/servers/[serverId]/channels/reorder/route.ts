@@ -8,7 +8,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ server
 
         const updatePromises = list.map((channel: { id: string, position: number, categoryId?: string }) => {
             return prisma.channel.update({
-                where: { id: channel.id, serverId: serverId },
+                where: { id: channel.id },
                 data: {
                     position: channel.position,
                     categoryId: channel.categoryId !== undefined ? (channel.categoryId === 'null' ? null : channel.categoryId) : undefined
