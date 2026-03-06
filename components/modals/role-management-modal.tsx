@@ -105,6 +105,7 @@ export const RoleManagementModal = ({ isOpen, onClose, user, member, serverRoles
                     <Edit size={12} className="text-[#B5BAC1]" />
                   </button>
                 </div>
+              </div>
             ))}
           </div>
         </ScrollArea>
