@@ -125,7 +125,7 @@ export const PWAInstall: React.FC<PWAInstallProps> = ({ className }) => {
               {/* Contenu */}
               <div className="flex-1 min-w-0">
                 <h3 className="text-white font-semibold mb-1">
-                  Installez Discord Clone
+                  Installez Obsidians
                 </h3>
                 <p className="text-[#B5BAC1] text-sm mb-3">
                   Installez l'application pour un accès rapide et une expérience native.

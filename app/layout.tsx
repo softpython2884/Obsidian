@@ -5,14 +5,14 @@ import { SocketProvider } from '@/components/providers/socket-provider';
 import { PWAProvider } from '@/components/providers/pwa-provider';
 
 export const metadata: Metadata = {
-  title: 'Discord Clone',
-  description: 'Un clone moderne de Discord avec animations, thèmes et médias',
+  title: 'Obsidians',
+  description: 'Une plateforme de communication moderne avec animations, thèmes et médias',
   manifest: '/manifest.json',
   themeColor: '#5865F2',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Discord Clone',
+    title: 'Obsidians',
   },
   icons: {
     icon: '/icon.svg',
@@ -36,8 +36,8 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Discord Clone" />
-        <meta name="application-name" content="Discord Clone" />
+        <meta name="apple-mobile-web-app-title" content="Obsidians" />
+        <meta name="application-name" content="Obsidians" />
         <meta name="msapplication-TileColor" content="#5865F2" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
