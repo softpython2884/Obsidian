@@ -92,9 +92,9 @@ export const ServerSidebar = ({ servers, activeServer, onSelectServer, onOpenMod
                             </div>
                           )}
                         </div>
-                        {mentionServers?.[server.id] > 0 && (
+                        {mentionServers && mentionServers[server.id] > 0 && (
                           <div className="absolute -bottom-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#f23f43] px-1 text-[10px] font-bold text-white shadow-sm ring-4 ring-transparent">
-                            {mentionServers[server.id] > 99 ? '99+' : mentionServers[server.id]}
+                            {mentionServers[server.id]! > 99 ? '99+' : mentionServers[server.id]!}
                           </div>
                         )}
                       </div>

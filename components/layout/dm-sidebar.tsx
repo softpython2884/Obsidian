@@ -118,9 +118,9 @@ export const DMSidebar = ({ activeChannel, onSelectChannel, onOpenSettings, onVi
                         </span>
                       )}
                     </div>
-                    {mentionChannels?.[dm.id] > 0 && (
+                    {mentionChannels && mentionChannels[dm.id] > 0 && (
                       <div className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#f23f43] px-1 text-[10px] font-bold text-white shadow-sm ml-2">
-                        {mentionChannels[dm.id] > 99 ? '99+' : mentionChannels[dm.id]}
+                        {mentionChannels[dm.id]! > 99 ? '99+' : mentionChannels[dm.id]!}
                       </div>
                     )}
                     {unreadChannels?.[dm.id] && !mentionChannels?.[dm.id] && activeChannel?.id !== dm.id && (

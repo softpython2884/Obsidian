@@ -84,14 +84,16 @@ export async function POST(req: Request) {
       if (!targetChannelId) {
         const firstChannel = await prisma.channel.findFirst({
           where: {
-            serverId: server.id,
+            category: {
+              serverId: server.id,
+            },
             type: 'TEXT',
           },
           orderBy: {
             name: 'asc'
           }
         });
-        targetChannelId = firstChannel?.id;
+        targetChannelId = firstChannel?.id || null;
       }
 
       if (targetChannelId) {

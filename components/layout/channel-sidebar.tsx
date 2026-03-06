@@ -162,9 +162,9 @@ export const ChannelSidebar = ({ server, activeChannel, onSelectChannel, onOpenS
                         )
                       )}
                       <span className={cn("truncate text-sm flex-1", activeChannel?.id === channel.id || unreadChannels?.[channel.id] ? "text-white font-bold" : "text-white/60 group-hover:text-white/90")}>{channel.name}</span>
-                      {mentionChannels?.[channel.id] > 0 && (
+                      {mentionChannels && mentionChannels[channel.id] > 0 && (
                         <div className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#f23f43] px-1 text-[10px] font-bold text-white shadow-sm ml-2">
-                          {mentionChannels[channel.id] > 99 ? '99+' : mentionChannels[channel.id]}
+                          {mentionChannels[channel.id]! > 99 ? '99+' : mentionChannels[channel.id]!}
                         </div>
                       )}
                       {unreadChannels?.[channel.id] && !mentionChannels?.[channel.id] && activeChannel?.id !== channel.id && (
