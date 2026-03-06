@@ -127,20 +127,20 @@ export const RoleManagementModal = ({ isOpen, onClose, user, member, serverRoles
           </div>
         </DialogFooter>
       </DialogContent>
+      
+      {/* Modal d'édition de rôle */}
+      {editingRole && (
+        <RoleEditorModal
+          isOpen={isRoleEditorOpen}
+          onClose={() => {
+            setIsRoleEditorOpen(false);
+            setEditingRole(null);
+          }}
+          role={editingRole}
+          serverRoles={serverRoles}
+          onSaveRole={handleSaveRole}
+        />
+      )}
     </Dialog>
-
-    {/* Modal d'édition de rôle */}
-    {editingRole && (
-      <RoleEditorModal
-        isOpen={isRoleEditorOpen}
-        onClose={() => {
-          setIsRoleEditorOpen(false);
-          setEditingRole(null);
-        }}
-        role={editingRole}
-        serverRoles={serverRoles}
-        onSaveRole={handleSaveRole}
-      />
-    )}
   );
 };
