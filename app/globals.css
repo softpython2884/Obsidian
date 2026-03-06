@@ -48,6 +48,145 @@
     background-attachment: var(--background-attachment);
     color: var(--normal-text);
   }
+
+  /* PWA Styles */
+  body[data-fullscreen="true"] {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  body[data-orientation="landscape"] {
+    @media (max-width: 768px) {
+      transform: rotate(0deg);
+    }
+  }
+
+  body[data-online="false"]::before {
+    content: "Mode Hors Ligne";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #faa61a;
+    color: #000;
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 9999;
+  }
+
+  /* iOS PWA Fixes */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    input, textarea {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+  }
+
+  /* Android PWA Fixes */
+  @media (display-mode: standalone) {
+    body {
+      padding-top: env(safe-area-inset-top);
+    }
+
+    /* Status bar color for Android */
+    @media (prefers-color-scheme: dark) {
+      body {
+        color-scheme: dark;
+      }
+    }
+  }
+
+  /* Installation prompt styles */
+  .pwa-install-prompt {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background: #2B2D31;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+  }
+
+  /* Splash screen animations */
+  @keyframes splash-fade-in {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes splash-fade-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(1.1);
+    }
+  }
+
+  .splash-screen {
+    animation: splash-fade-in 0.5s ease-out;
+  }
+
+  .splash-screen.exiting {
+    animation: splash-fade-out 0.3s ease-in;
+  }
+
+  /* Optimisations mobile */
+  @media (max-width: 768px) {
+    body {
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Prevent zoom on input focus */
+    input, textarea, select {
+      font-size: 16px;
+    }
+
+    /* Better touch targets */
+    button, a, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Performance optimizations */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 @layer utilities {

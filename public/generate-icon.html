@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; background: #5865F2; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="512" height="512"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Fond avec gradient
+        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+        gradient.addColorStop(0, '#5865F2');
+        gradient.addColorStop(1, '#4752C4');
+        
+        // Rectangle arrondi comme fond
+        ctx.fillStyle = gradient;
+        roundRect(ctx, 0, 0, 512, 512, 120);
+        ctx.fill();
+        
+        // Logo Discord simplifié
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.95;
+        
+        // Tête principale
+        ctx.beginPath();
+        ctx.ellipse(256, 226, 80, 90, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Oreille gauche
+        ctx.beginPath();
+        ctx.moveTo(196, 156);
+        ctx.quadraticCurveTo(176, 176, 186, 206);
+        ctx.quadraticCurveTo(196, 196, 196, 156);
+        ctx.fill();
+        
+        // Oreille droite
+        ctx.beginPath();
+        ctx.moveTo(316, 156);
+        ctx.quadraticCurveTo(336, 176, 326, 206);
+        ctx.quadraticCurveTo(316, 196, 316, 156);
+        ctx.fill();
+        
+        // Yeux
+        ctx.fillStyle = '#2F3136';
+        ctx.beginPath();
+        ctx.arc(231, 216, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(281, 216, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Bouche
+        ctx.strokeStyle = '#2F3136';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(236, 246);
+        ctx.quadraticCurveTo(256, 261, 276, 246);
+        ctx.stroke();
+        
+        // Dents
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.8;
+        ctx.fillRect(251, 248, 4, 6);
+        ctx.fillRect(257, 248, 4, 6);
+        
+        // Effet de brillance
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.2;
+        ctx.beginPath();
+        ctx.ellipse(150, 100, 60, 40, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+        
+        // Télécharger l'image
+        canvas.toBlob(function(blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'icon-512.png';
+            a.click();
+        });
+    </script>
+</body>
+</html>
