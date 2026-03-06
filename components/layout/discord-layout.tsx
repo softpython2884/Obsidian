@@ -11,9 +11,11 @@ import { Toaster, toast } from 'sonner';
 import { UserSettingsModal } from '@/components/modals/user-settings-modal';
 import { UserProfileModal } from '@/components/modals/user-profile-modal';
 import { ServerSettingsModal } from '@/components/modals/server-settings-modal';
-import { DMSidebar } from '@/components/layout/dm-sidebar';
-import { DMView } from '@/components/layout/dm-view';
+import { DMSidebar } from './dm-sidebar';
+import { DMView } from './dm-view';
 import { useSocket } from '@/components/providers/socket-provider';
+import { CommandPalette, useCommandPalette } from '@/components/ui/command-palette';
+import { AnimatedContainer } from '@/components/ui/animated-container';
 
 export const DiscordLayout = () => {
   const { user, logout } = useAuth();
@@ -28,6 +30,7 @@ export const DiscordLayout = () => {
   const [profileCoords, setProfileCoords] = useState<{ x: number, y: number } | null>(null);
 
   const { socket } = useSocket();
+  const { isOpen: isCommandPaletteOpen, close: closeCommandPalette, open: openCommandPalette } = useCommandPalette();
   const [unreadChannels, setUnreadChannels] = useState<Record<string, boolean>>({});
   const [mentionChannels, setMentionChannels] = useState<Record<string, number>>({});
   const [unreadServers, setUnreadServers] = useState<Record<string, boolean>>({});
@@ -391,6 +394,14 @@ export const DiscordLayout = () => {
           setActiveServer(null);
           setActiveChannel(null);
         }}
+      />
+
+      {/* Command Palette */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={closeCommandPalette}
+        servers={servers}
+        activeServer={activeServer}
       />
 
       <Toaster theme="dark" position="bottom-center" />
