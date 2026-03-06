@@ -75,7 +75,7 @@ export const GifPicker = ({ onGifSelect }: GifPickerProps) => {
         <form onSubmit={handleSearch} className="relative flex items-center">
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: any) => setSearch(e.target.value)}
             placeholder="Search GIPHY"
             className="bg-[#111214] border-none text-white h-9 pl-9 focus-visible:ring-0 focus-visible:ring-offset-0 text-xs rounded-md"
           />

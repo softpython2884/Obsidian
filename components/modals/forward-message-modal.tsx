@@ -106,7 +106,7 @@ export const ForwardMessageModal = ({ isOpen, onClose, onForward, currentServerI
                 <SelectValue placeholder="Select a channel" />
               </SelectTrigger>
               <SelectContent className="bg-[#1E1F22] border-[#2B2D31] text-[#DBDEE1]">
-                {channels.map((channel) => (
+                {channels.map((channel: any) => (
                   <SelectItem key={channel.id} value={channel.id} className="focus:bg-[#35373C] focus:text-white cursor-pointer">
                     # {channel.name}
                   </SelectItem>

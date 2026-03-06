@@ -115,7 +115,7 @@ export const RoleEditorModal: React.FC<RoleEditorModalProps> = ({
     )
     .map(([name, component]) => ({ name, component }));
 
-  const getIconComponent = (iconName: string) => {
+  const getIconComponent = (iconName: string): any => {
     const IconComponent = (LucideIcons as any)[iconName];
     return IconComponent || Shield;
   };
@@ -185,7 +185,7 @@ export const RoleEditorModal: React.FC<RoleEditorModalProps> = ({
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 px-3 py-2 bg-[#202225] text-white rounded-lg hover:bg-white/10 transition-colors">
                     {(() => {
-                      const IconComponent = getIconComponent(roleData.icon);
+                      const IconComponent = getIconComponent(roleData.icon || 'Shield');
                       return <IconComponent size={20} className="text-[#B5BAC1]" />;
                     })()}
                     <ChevronDown size={16} className="text-[#B5BAC1]" />
@@ -202,16 +202,19 @@ export const RoleEditorModal: React.FC<RoleEditorModalProps> = ({
                     />
                   </div>
                   <div className="max-h-40 overflow-y-auto space-y-1">
-                    {filteredIcons.map(({ name, component: IconComponent }) => (
-                      <DropdownMenuItem
-                        key={name}
-                        onClick={() => setRoleData(prev => ({ ...prev, icon: name }))}
-                        className="flex items-center gap-2 px-2 py-1 hover:bg-white/10 cursor-pointer"
-                      >
-                        <IconComponent size={16} className="text-[#B5BAC1]" />
-                        <span className="text-white text-sm">{name}</span>
-                      </DropdownMenuItem>
-                    ))}
+                    {filteredIcons.map(({ name, component: IconComponent }) => {
+                      const Icon = (IconComponent as any);
+                      return (
+                        <DropdownMenuItem
+                          key={name}
+                          onClick={() => setRoleData(prev => ({ ...prev, icon: name }))}
+                          className="flex items-center gap-2 px-2 py-1 hover:bg-white/10 cursor-pointer"
+                        >
+                          <Icon size={16} className="text-[#B5BAC1]" />
+                          <span className="text-white text-sm">{name}</span>
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -279,7 +282,7 @@ export const RoleEditorModal: React.FC<RoleEditorModalProps> = ({
                 style={{ backgroundColor: roleData.color }}
               >
                 {(() => {
-                  const IconComponent = getIconComponent(roleData.icon);
+                  const IconComponent = getIconComponent(roleData.icon || 'Shield');
                   return <IconComponent size={24} />;
                 })()}
               </div>
